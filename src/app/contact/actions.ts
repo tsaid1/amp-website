@@ -7,6 +7,9 @@ const resend = process.env.RESEND_API_KEY
   ? new Resend(process.env.RESEND_API_KEY)
   : null;
 
+// Contact email - who receives form submissions
+const CONTACT_EMAIL = process.env.CONTACT_EMAIL || "hello@ampenergy.ae";
+
 // Formspree endpoint as fallback
 const FORMSPREE_ENDPOINT = process.env.FORMSPREE_ENDPOINT;
 
@@ -75,9 +78,11 @@ export async function submitContactForm(
   // Try Resend first, then fall back to Formspree
   if (resend) {
     try {
-      const { error } = await resend.emails.send({
-        from: "Amp Contact Form <noreply@ampenergy.ae>",
-        to: ["hello@ampenergy.ae"],
+      // IMPORTANT: Use onboarding@resend.dev until domain is verified in Resend
+      // After verifying ampenergy.ae domain, change to: noreply@ampenergy.ae
+      const { data: emailData, error } = await resend.emails.send({
+        from: "Amp Contact Form <onboarding@resend.dev>",
+        to: [CONTACT_EMAIL],
         replyTo: data.email,
         subject: `Contact Form: ${data.name}${data.company ? ` (${data.company})` : ""}`,
         text: buildPlainTextEmail(data),
@@ -85,15 +90,19 @@ export async function submitContactForm(
       });
 
       if (error) {
-        console.error("Resend error:", error);
+        console.error("Resend error:", JSON.stringify(error, null, 2));
+        console.error("Resend error details - name:", error.name, "message:", error.message);
         // Fall through to Formspree
       } else {
+        console.log("Email sent successfully via Resend. ID:", emailData?.id);
         return { success: true };
       }
     } catch (err) {
-      console.error("Resend exception:", err);
+      console.error("Resend exception:", err instanceof Error ? err.message : err);
       // Fall through to Formspree
     }
+  } else {
+    console.warn("Resend not initialized - RESEND_API_KEY may be missing");
   }
 
   // Fallback to Formspree
