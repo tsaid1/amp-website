@@ -1211,7 +1211,7 @@ function VizPowerlinkGO() {
 
   return (
     <div
-      className="viz-powerlink relative w-full aspect-square max-w-[280px] sm:max-w-[400px] md:max-w-[500px] mx-auto overflow-hidden"
+      className="viz-powerlink relative w-full aspect-square max-w-[280px] sm:max-w-[400px] md:max-w-[500px] mx-auto overflow-hidden flex items-center justify-center"
       role="img"
       aria-label="PowerlinkGO device receiving data from building equipment including HVAC, chiller, pump, lighting, plug loads, and meter"
     >

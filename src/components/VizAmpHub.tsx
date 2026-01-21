@@ -63,7 +63,7 @@ const outboundPath = { id: 'cloud', d: 'M200,225 C200,180 200,120 200,60' };
 export function VizAmpHub() {
   return (
     <div
-      className="relative w-full max-w-[280px] sm:max-w-[400px] md:max-w-[500px] mx-auto overflow-hidden"
+      className="relative w-full max-w-[280px] sm:max-w-[400px] md:max-w-[500px] mx-auto overflow-hidden flex items-center justify-center"
       style={{ aspectRatio: '1 / 1.1' }}
       role="img"
       aria-label="Amp Hub gateway collecting data from air quality, occupancy, water, and energy sensors, then transmitting to the cloud"
