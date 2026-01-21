@@ -78,10 +78,9 @@ export async function submitContactForm(
   // Try Resend first, then fall back to Formspree
   if (resend) {
     try {
-      // IMPORTANT: Use onboarding@resend.dev until domain is verified in Resend
-      // After verifying ampenergy.ae domain, change to: noreply@ampenergy.ae
+      // Domain verified in Resend - using ampenergy.ae
       const { data: emailData, error } = await resend.emails.send({
-        from: "Amp Contact Form <onboarding@resend.dev>",
+        from: "Amp Energy <noreply@ampenergy.ae>",
         to: [CONTACT_EMAIL],
         replyTo: data.email,
         subject: `Contact Form: ${data.name}${data.company ? ` (${data.company})` : ""}`,
