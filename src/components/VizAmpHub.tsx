@@ -63,16 +63,16 @@ const outboundPath = { id: 'cloud', d: 'M200,225 C200,180 200,120 200,60' };
 export function VizAmpHub() {
   return (
     <div
-      className="relative w-full max-w-[540px] mx-auto p-8"
+      className="relative w-full max-w-[320px] sm:max-w-[400px] md:max-w-[500px] mx-auto p-4 sm:p-6 md:p-8 overflow-hidden"
       style={{ aspectRatio: '1 / 1.1' }}
       role="img"
       aria-label="Amp Hub gateway collecting data from air quality, occupancy, water, and energy sensors, then transmitting to the cloud"
     >
       <div className="relative w-full h-full">
 
-        {/* Signal waves emanating from hub */}
+        {/* Signal waves emanating from hub - hidden on small screens to prevent overflow */}
         <div
-          className="absolute z-0 pointer-events-none"
+          className="absolute z-0 pointer-events-none hidden sm:block"
           style={{ left: '50%', top: '50%', transform: 'translate(-50%, -50%)' }}
         >
           <div className="amphub-signal-wave amphub-signal-wave-1" />
@@ -83,9 +83,8 @@ export function VizAmpHub() {
         {/* SVG paths and animated dots */}
         <svg
           viewBox="0 0 400 450"
-          className="absolute inset-0 w-full h-full pointer-events-none"
+          className="absolute inset-0 w-full h-full pointer-events-none overflow-visible sm:overflow-visible"
           aria-hidden="true"
-          style={{ overflow: 'visible' }}
         >
           <defs>
             <linearGradient id="inboundGradient" x1="0%" y1="0%" x2="100%" y2="100%">

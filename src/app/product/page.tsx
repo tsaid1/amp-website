@@ -162,9 +162,19 @@ function ProductPageContent() {
   const searchParams = useSearchParams();
   const router = useRouter();
 
-  // Get tab from URL or default to "hub"
-  const currentTab = searchParams.get("tab") || "hub";
+  // Get initial tab from URL or default to "hub"
+  const urlTab = searchParams.get("tab") || "hub";
+  // Use local state for immediate UI updates
+  const [currentTab, setCurrentTab] = useState(urlTab);
   const activeHardware = currentTab === "meters" ? meterSpecs : hubSpecs;
+
+  // Sync tab state when URL changes (e.g., browser back/forward)
+  useEffect(() => {
+    const newTab = searchParams.get("tab") || "hub";
+    if (newTab !== currentTab) {
+      setCurrentTab(newTab);
+    }
+  }, [searchParams, currentTab]);
 
   // Mouse tracking for parallax effect
   useEffect(() => {
@@ -184,6 +194,9 @@ function ProductPageContent() {
   }, []);
 
   const handleTabChange = (value: string) => {
+    // Update local state immediately for instant UI feedback
+    setCurrentTab(value);
+    // Update URL for bookmarking/sharing (won't cause re-render since state already updated)
     router.push(`/product?tab=${value}`, { scroll: false });
   };
 
@@ -1183,17 +1196,17 @@ function VizPowerlinkGO() {
 
   return (
     <div
-      className="viz-powerlink relative w-full aspect-square max-w-[540px] mx-auto p-8"
+      className="viz-powerlink relative w-full aspect-square max-w-[320px] sm:max-w-[400px] md:max-w-[500px] mx-auto p-4 sm:p-6 md:p-8 overflow-hidden"
       role="img"
       aria-label="PowerlinkGO device receiving data from building equipment including HVAC, chiller, pump, lighting, plug loads, and meter"
     >
       <div className="relative w-full h-full">
         <svg
-        className="absolute inset-0 w-full h-full"
-        viewBox="0 0 400 400"
-        preserveAspectRatio="xMidYMid meet"
-        aria-hidden="true"
-      >
+          className="absolute inset-0 w-full h-full"
+          viewBox="0 0 400 400"
+          preserveAspectRatio="xMidYMid meet"
+          aria-hidden="true"
+        >
         {/* Subtle orbit ring */}
         <circle
           className="viz-orbit-ring"
