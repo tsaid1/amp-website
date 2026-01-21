@@ -483,7 +483,11 @@ const logos = [
 
 function LogoCarousel() {
   return (
-    <div className="logo-carousel">
+    <div
+      className="logo-carousel"
+      role="region"
+      aria-label="Trusted by companies including Chalhoub Group, Amazon, IKEA, and more"
+    >
       <div className="logo-carousel-track">
         {/* First set of logos */}
         {logos.map((logo) => (

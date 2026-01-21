@@ -36,13 +36,13 @@ export function Header() {
           />
         </Link>
 
-        {/* Desktop Navigation */}
+        {/* Desktop Navigation - min-h-[44px] for WCAG touch target compliance */}
         <div className="hidden items-center gap-1 md:flex">
           {navLinks.map((link) => (
             <Link
               key={link.href}
               href={link.href}
-              className="nav-link rounded-md px-3 py-2 text-sm font-medium text-[var(--muted)] transition-colors hover:text-[var(--color-primary-dark)]"
+              className="nav-link rounded-md px-3 py-2 min-h-[44px] flex items-center text-sm font-medium text-[var(--muted)] transition-colors hover:text-[var(--color-primary-dark)]"
             >
               {link.label}
             </Link>

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, type FormEvent } from "react";
+import { useState, useRef, type FormEvent } from "react";
 import * as Accordion from "@radix-ui/react-accordion";
 import { Button, Input, Textarea, FadeIn, FadeInStagger, FadeInStaggerItem } from "@/components/ui";
 import { CalendarIcon, MailIcon, MapPinIcon, ChevronDownIcon } from "@/components/icons";
@@ -76,6 +76,11 @@ export default function ContactPage() {
   const [status, setStatus] = useState<FormStatus>("idle");
   const [submitError, setSubmitError] = useState<string | null>(null);
 
+  // Refs for focus management on validation errors
+  const nameInputRef = useRef<HTMLInputElement>(null);
+  const emailInputRef = useRef<HTMLInputElement>(null);
+  const messageInputRef = useRef<HTMLTextAreaElement>(null);
+
   const validateForm = (): boolean => {
     const newErrors: FormErrors = {};
 
@@ -92,12 +97,34 @@ export default function ContactPage() {
     return Object.keys(newErrors).length === 0;
   };
 
+  // Focus the first field with an error for accessibility
+  const focusFirstError = (errorFields: FormErrors) => {
+    if (errorFields.name && nameInputRef.current) {
+      nameInputRef.current.focus();
+    } else if (errorFields.email && emailInputRef.current) {
+      emailInputRef.current.focus();
+    } else if (errorFields.message && messageInputRef.current) {
+      messageInputRef.current.focus();
+    }
+  };
+
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
     setSubmitError(null);
 
-    // Validate form
-    if (!validateForm()) {
+    // Validate form and focus first error if invalid
+    const newErrors: FormErrors = {};
+    const nameError = validateName(formData.name);
+    if (nameError) newErrors.name = nameError;
+    const emailError = validateEmail(formData.email);
+    if (emailError) newErrors.email = emailError;
+    const messageError = validateMessage(formData.message);
+    if (messageError) newErrors.message = messageError;
+
+    if (Object.keys(newErrors).length > 0) {
+      setErrors(newErrors);
+      // Focus first error field after state update
+      setTimeout(() => focusFirstError(newErrors), 0);
       return;
     }
 
@@ -236,6 +263,7 @@ export default function ContactPage() {
                   </div>
 
                   <Input
+                    ref={nameInputRef}
                     label="Name"
                     name="name"
                     autoComplete="name"
@@ -246,9 +274,9 @@ export default function ContactPage() {
                     placeholder="Your name"
                     error={errors.name}
                     disabled={isSubmitting}
-                    aria-describedby={errors.name ? "name-error" : undefined}
                   />
                   <Input
+                    ref={emailInputRef}
                     label="Email"
                     name="email"
                     type="email"
@@ -274,6 +302,7 @@ export default function ContactPage() {
                     disabled={isSubmitting}
                   />
                   <Textarea
+                    ref={messageInputRef}
                     label="Message"
                     name="message"
                     required

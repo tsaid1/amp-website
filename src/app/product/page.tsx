@@ -868,6 +868,10 @@ function ProductPageSkeleton() {
 function VizCircuitMonitoring() {
   return (
     <div className="viz-circuit relative w-full h-[280px] lg:h-[320px] mt-6">
+      {/* Visually hidden description for screen readers */}
+      <span className="sr-only">
+        Animated visualization showing a grid of connected circuit nodes with data flowing between them, representing real-time circuit-level monitoring.
+      </span>
       <svg className="w-full h-full" viewBox="0 0 400 280" preserveAspectRatio="xMidYMid meet" aria-hidden="true">
         <defs>
           {/* Topographic pattern */}
@@ -961,6 +965,9 @@ function VizCircuitMonitoring() {
 function VizAiSavings() {
   return (
     <div className="viz-line-graph relative w-full h-[140px] mt-4">
+      <span className="sr-only">
+        Animated line graph showing energy savings trending upward over time with a glowing endpoint indicator.
+      </span>
       {/* Dot grid background */}
       <svg className="absolute inset-0 w-full h-full" aria-hidden="true">
         <defs>
@@ -1016,6 +1023,9 @@ function VizAiSavings() {
 function VizAlerts() {
   return (
     <div className="viz-alerts relative w-full h-[140px] mt-4 overflow-hidden">
+      <span className="sr-only">
+        Animated waveform visualization with an alert spike and expanding ripples, representing real-time anomaly detection.
+      </span>
       <svg className="w-full h-full" viewBox="0 0 200 100" preserveAspectRatio="xMidYMid meet" aria-hidden="true">
         {/* Waveform - left side */}
         <path
@@ -1061,6 +1071,9 @@ function VizAlerts() {
 function VizRating() {
   return (
     <div className="viz-rating relative w-full h-[140px] mt-4 flex items-center justify-center">
+      <span className="sr-only">
+        Animated efficiency gauge with concentric zones from red (poor) to green (excellent), with an indicator showing high efficiency.
+      </span>
       <svg className="w-full h-full" viewBox="0 0 200 120" preserveAspectRatio="xMidYMid meet" aria-hidden="true">
         {/* Contour lines - outer to inner (warm to cool) */}
         <rect className="contour contour-1" x="20" y="15" width="160" height="90" rx="20" fill="none" stroke="rgba(255, 150, 100, 0.15)" strokeWidth="1" />
@@ -1084,6 +1097,9 @@ function VizRating() {
 function VizApi() {
   return (
     <div className="viz-api relative w-full h-[140px] mt-4">
+      <span className="sr-only">
+        Animated network diagram showing a central API hub connected to multiple integration endpoints with flowing data.
+      </span>
       <svg className="w-full h-full" viewBox="0 0 200 120" preserveAspectRatio="xMidYMid meet" aria-hidden="true">
         {/* Connection lines (bezier curves) with draw animation */}
         <path className="connection-line" d="M100,60 Q60,30 30,35" fill="none" stroke="rgba(29, 185, 160, 0.3)" strokeWidth="1" />
