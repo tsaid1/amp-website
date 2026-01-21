@@ -763,9 +763,11 @@ function HardwareTabContent({ specs }: { specs: typeof hubSpecs }) {
       {/* Image/Visualization - 45% width on desktop */}
       <FadeIn direction="right">
         <div
-          className="relative w-full aspect-[4/5] rounded-2xl p-3 sm:p-6 float-3d flex items-center justify-center bg-gradient-to-br from-[var(--background)] to-[var(--background-subtle)]"
+          className="relative w-full aspect-[3/4] md:aspect-[4/3] rounded-2xl p-4 md:p-8 float-3d flex items-center justify-center bg-gradient-to-br from-[var(--background)] to-[var(--background-subtle)]"
           style={{
             boxShadow: "0 25px 50px -12px rgba(0, 0, 0, 0.15), 0 0 0 1px var(--border)",
+            minHeight: "clamp(350px, 40vh, 400px)",
+            maxHeight: "clamp(400px, 50vh, 450px)",
           }}
         >
           {isPowerlinkGO ? (
@@ -1211,8 +1213,7 @@ function VizPowerlinkGO() {
 
   return (
     <div
-      className="viz-powerlink relative w-full max-w-[280px] sm:max-w-[400px] md:max-w-[500px] mx-auto flex items-center justify-center p-2 sm:p-4"
-      style={{ aspectRatio: '1 / 1.15' }}
+      className="viz-powerlink relative w-full max-w-[300px] md:max-w-[540px] mx-auto flex items-center justify-center p-4 md:p-8 aspect-[1/1.15] md:aspect-square"
       role="img"
       aria-label="PowerlinkGO device receiving data from building equipment including HVAC, chiller, pump, lighting, plug loads, and meter"
     >
