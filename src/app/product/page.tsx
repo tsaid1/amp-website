@@ -1137,13 +1137,14 @@ function VizApi() {
 function VizPowerlinkGO() {
   // Static equipment data with pre-calculated positions
   // Layout: Arranged around center point (200, 200) in 400x400 viewBox
+  // Side: 'left' = 20% mobile / 16% desktop, 'right' = 80% mobile / 84% desktop, 'center' = 50%
   const equipmentData = [
     {
       id: 'hvac',
       label: 'HVAC',
       icon: HvacIcon,
       path: 'M65,290 Q130,250 200,200',
-      left: '16%',
+      side: 'left' as const,
       top: '72%',
       delay: 0,
     },
@@ -1152,7 +1153,7 @@ function VizPowerlinkGO() {
       label: 'Chiller',
       icon: ChillerIcon,
       path: 'M200,50 Q200,120 200,200',
-      left: '50%',
+      side: 'center' as const,
       top: '12%',
       delay: 0.4,
     },
@@ -1161,7 +1162,7 @@ function VizPowerlinkGO() {
       label: 'Pump',
       icon: PumpIcon,
       path: 'M335,110 Q270,150 200,200',
-      left: '84%',
+      side: 'right' as const,
       top: '28%',
       delay: 0.8,
     },
@@ -1170,7 +1171,7 @@ function VizPowerlinkGO() {
       label: 'Lighting',
       icon: LightingIcon,
       path: 'M335,290 Q270,250 200,200',
-      left: '84%',
+      side: 'right' as const,
       top: '72%',
       delay: 1.2,
     },
@@ -1179,7 +1180,7 @@ function VizPowerlinkGO() {
       label: 'Plug',
       icon: SocketIcon,
       path: 'M200,350 Q200,280 200,200',
-      left: '50%',
+      side: 'center' as const,
       top: '88%',
       delay: 1.6,
     },
@@ -1188,7 +1189,7 @@ function VizPowerlinkGO() {
       label: 'Meter',
       icon: MeterIcon,
       path: 'M65,110 Q130,150 200,200',
-      left: '16%',
+      side: 'left' as const,
       top: '28%',
       delay: 2.0,
     },
@@ -1270,15 +1271,20 @@ function VizPowerlinkGO() {
         />
       </svg>
 
-      {/* Equipment icons with static positions */}
+      {/* Equipment icons - responsive positioning: 20%/80% on mobile, 16%/84% on desktop */}
       {equipmentData.map((eq) => {
         const IconComponent = eq.icon;
         return (
           <div
             key={`icon-${eq.id}`}
-            className="viz-equipment-icon absolute flex flex-col items-center"
+            className={`viz-equipment-icon absolute flex flex-col items-center ${
+              eq.side === 'left'
+                ? 'left-[20%] md:left-[16%]'
+                : eq.side === 'right'
+                ? 'left-[80%] md:left-[84%]'
+                : 'left-[50%]'
+            }`}
             style={{
-              left: eq.left,
               top: eq.top,
               transform: 'translate(-50%, -50%)',
               animationDelay: `${eq.delay * 0.15}s`,

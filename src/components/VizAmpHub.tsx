@@ -45,10 +45,10 @@ function CloudIcon({ className }: { className?: string }) {
 }
 
 const sensorData = [
-  { id: 'iaq', Icon: WindIcon, label: 'Air Quality', left: '10%', top: '30%', delay: 0 },
-  { id: 'occupancy', Icon: UsersIcon, label: 'Occupancy', left: '90%', top: '30%', delay: 0.4 },
-  { id: 'water', Icon: DropletsIcon, label: 'Water', left: '10%', top: '70%', delay: 0.8 },
-  { id: 'energy', Icon: ZapIcon, label: 'Energy', left: '90%', top: '70%', delay: 1.2 },
+  { id: 'iaq', Icon: WindIcon, label: 'Air Quality', side: 'left', top: '30%', delay: 0 },
+  { id: 'occupancy', Icon: UsersIcon, label: 'Occupancy', side: 'right', top: '30%', delay: 0.4 },
+  { id: 'water', Icon: DropletsIcon, label: 'Water', side: 'left', top: '70%', delay: 0.8 },
+  { id: 'energy', Icon: ZapIcon, label: 'Energy', side: 'right', top: '70%', delay: 1.2 },
 ] as const;
 
 const inboundPaths = [
@@ -179,13 +179,16 @@ export function VizAmpHub() {
           <span className="text-xs text-[var(--muted)] mt-2 font-medium">Amp Cloud</span>
         </div>
 
-        {/* Sensor icons */}
+        {/* Sensor icons - responsive positioning: 18%/82% on mobile, 10%/90% on md+ */}
         {sensorData.map((sensor) => (
           <div
             key={`sensor-${sensor.id}`}
-            className="absolute flex flex-col items-center z-10 amphub-sensor-icon"
+            className={`absolute flex flex-col items-center z-10 amphub-sensor-icon ${
+              sensor.side === 'left'
+                ? 'left-[18%] md:left-[10%]'
+                : 'left-[82%] md:left-[90%]'
+            }`}
             style={{
-              left: sensor.left,
               top: sensor.top,
               transform: 'translate(-50%, -50%)',
               animationDelay: `${sensor.delay}s`,
