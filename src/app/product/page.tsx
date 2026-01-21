@@ -1196,11 +1196,12 @@ function VizPowerlinkGO() {
 
   return (
     <div
-      className="viz-powerlink relative w-full aspect-square max-w-[320px] sm:max-w-[400px] md:max-w-[500px] mx-auto p-4 sm:p-6 md:p-8 overflow-hidden"
+      className="viz-powerlink relative w-full aspect-square max-w-[280px] sm:max-w-[400px] md:max-w-[500px] mx-auto overflow-hidden"
       role="img"
       aria-label="PowerlinkGO device receiving data from building equipment including HVAC, chiller, pump, lighting, plug loads, and meter"
     >
-      <div className="relative w-full h-full">
+      {/* Scale down on mobile to fit 320px screens */}
+      <div className="relative w-full h-full scale-[0.85] sm:scale-100 origin-center">
         <svg
           className="absolute inset-0 w-full h-full"
           viewBox="0 0 400 400"
