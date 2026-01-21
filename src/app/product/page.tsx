@@ -759,8 +759,8 @@ function HardwareTabContent({ specs }: { specs: typeof hubSpecs }) {
   const isAmpHub = specs.name === "Amp Hub";
 
   return (
-    <div className="grid gap-8 lg:grid-cols-2 lg:gap-16 items-center">
-      {/* Image/Visualization - Responsive dimensions */}
+    <div className="grid gap-8 lg:grid-cols-[45%_1fr] lg:gap-12 items-center max-w-6xl mx-auto">
+      {/* Image/Visualization - 45% width on desktop */}
       <FadeIn direction="right">
         <div
           className="relative w-full aspect-[4/3] rounded-2xl p-3 sm:p-6 float-3d flex items-center justify-center bg-gradient-to-br from-[var(--background)] to-[var(--background-subtle)] overflow-hidden"
@@ -784,9 +784,9 @@ function HardwareTabContent({ specs }: { specs: typeof hubSpecs }) {
         </div>
       </FadeIn>
 
-      {/* Content */}
+      {/* Content - 55% width on desktop */}
       <FadeIn direction="left" delay={0.2}>
-        <div className="min-w-0">
+        <div className="min-w-0 lg:pr-4">
           <span className="text-sm font-medium uppercase tracking-wider text-[var(--color-primary)]">
             {specs.tagline}
           </span>

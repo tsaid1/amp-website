@@ -27,11 +27,11 @@ const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://ampenergy.ae";
 export const metadata: Metadata = {
   metadataBase: new URL(siteUrl),
   title: {
-    default: "Amp | Equipment-Level Energy Data for Buildings",
+    default: "Amp | Equipment-Level Energy Intelligence for Buildings",
     template: "%s | Amp",
   },
   description:
-    "The fastest and most affordable way to get equipment-level energy data from your building. Circuit-level monitoring with ±0.2% accuracy. No BMS required.",
+    "See where your energy actually goes. Amp delivers real-time, equipment-level energy data for commercial buildings—no BMS required. Live in 24 hours.",
   keywords: [
     "energy monitoring",
     "building energy management",
@@ -57,9 +57,9 @@ export const metadata: Metadata = {
     locale: "en_US",
     url: siteUrl,
     siteName: "Amp",
-    title: "Amp | Equipment-Level Energy Data for Buildings",
+    title: "Amp | Equipment-Level Energy Intelligence for Buildings",
     description:
-      "The fastest and most affordable way to get equipment-level energy data from your building. Circuit-level monitoring with ±0.2% accuracy.",
+      "See where your energy actually goes. Amp delivers real-time, equipment-level energy data for commercial buildings—no BMS required. Live in 24 hours.",
     images: [
       {
         url: "/images/og-image.png",
@@ -71,9 +71,9 @@ export const metadata: Metadata = {
   },
   twitter: {
     card: "summary_large_image",
-    title: "Amp | Equipment-Level Energy Data for Buildings",
+    title: "Amp | Equipment-Level Energy Intelligence for Buildings",
     description:
-      "The fastest and most affordable way to get equipment-level energy data from your building.",
+      "See where your energy actually goes. Amp delivers real-time, equipment-level energy data for commercial buildings—no BMS required. Live in 24 hours.",
     images: ["/images/og-image.png"],
   },
   robots: {
@@ -103,7 +103,7 @@ const organizationSchema = {
   url: siteUrl,
   logo: `${siteUrl}/images/amp-logo.svg`,
   description:
-    "Amp provides equipment-level energy monitoring for commercial buildings. Circuit-level data with ±0.2% accuracy, no BMS required.",
+    "See where your energy actually goes. Amp delivers real-time, equipment-level energy data for commercial buildings—no BMS required. Live in 24 hours.",
   address: {
     "@type": "PostalAddress",
     streetAddress: "Floor 8, Tower 4, One Central, DWTC",
