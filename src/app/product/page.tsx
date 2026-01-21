@@ -377,7 +377,7 @@ function ProductPageContent() {
           ============================================ */}
       <section
         id="hardware"
-        className="scroll-mt-20 bg-[var(--background-subtle)] py-[var(--space-section-lg)]"
+        className="scroll-mt-20 bg-[var(--background-subtle)] py-[var(--space-section-lg)] overflow-x-hidden"
         aria-labelledby="hardware-heading"
       >
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
@@ -759,15 +759,13 @@ function HardwareTabContent({ specs }: { specs: typeof hubSpecs }) {
   const isAmpHub = specs.name === "Amp Hub";
 
   return (
-    <div className="grid gap-12 lg:grid-cols-2 lg:gap-16 items-center">
-      {/* Image/Visualization - Fixed dimensions for consistent layout across tabs */}
+    <div className="grid gap-8 lg:grid-cols-2 lg:gap-16 items-center">
+      {/* Image/Visualization - Responsive dimensions */}
       <FadeIn direction="right">
         <div
-          className="relative w-full aspect-[4/3] rounded-2xl p-6 float-3d flex items-center justify-center bg-gradient-to-br from-[var(--background)] to-[var(--background-subtle)]"
+          className="relative w-full aspect-[4/3] rounded-2xl p-3 sm:p-6 float-3d flex items-center justify-center bg-gradient-to-br from-[var(--background)] to-[var(--background-subtle)] overflow-hidden"
           style={{
             boxShadow: "0 25px 50px -12px rgba(0, 0, 0, 0.15), 0 0 0 1px var(--border)",
-            minHeight: "400px",
-            maxHeight: "450px",
           }}
         >
           {isPowerlinkGO ? (
@@ -788,19 +786,19 @@ function HardwareTabContent({ specs }: { specs: typeof hubSpecs }) {
 
       {/* Content */}
       <FadeIn direction="left" delay={0.2}>
-        <div>
+        <div className="min-w-0">
           <span className="text-sm font-medium uppercase tracking-wider text-[var(--color-primary)]">
             {specs.tagline}
           </span>
-          <h3 className="mt-2 font-display text-3xl font-bold text-[var(--foreground-heading)]">
+          <h3 className="mt-2 font-display text-2xl sm:text-3xl font-bold text-[var(--foreground-heading)]">
             {specs.name}
           </h3>
-          <p className="mt-4 text-lg text-[var(--muted)]">
+          <p className="mt-4 text-base sm:text-lg text-[var(--muted)]">
             {specs.description}
           </p>
 
-          {/* Specs grid */}
-          <dl className="mt-8 grid grid-cols-2 gap-4">
+          {/* Specs grid - stack on small screens, 2 cols from 400px+ */}
+          <dl className="mt-6 sm:mt-8 grid grid-cols-1 min-[400px]:grid-cols-2 gap-3 sm:gap-4">
             {specs.specs.map((spec) => (
               <div
                 key={spec.label}
