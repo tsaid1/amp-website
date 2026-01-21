@@ -63,8 +63,8 @@ const outboundPath = { id: 'cloud', d: 'M200,225 C200,180 200,120 200,60' };
 export function VizAmpHub() {
   return (
     <div
-      className="relative w-full max-w-[280px] sm:max-w-[400px] md:max-w-[500px] mx-auto overflow-hidden flex items-center justify-center"
-      style={{ aspectRatio: '1 / 1.1' }}
+      className="relative w-full max-w-[280px] sm:max-w-[400px] md:max-w-[500px] mx-auto flex items-center justify-center pt-6"
+      style={{ aspectRatio: '1 / 1.3' }}
       role="img"
       aria-label="Amp Hub gateway collecting data from air quality, occupancy, water, and energy sensors, then transmitting to the cloud"
     >
@@ -171,7 +171,7 @@ export function VizAmpHub() {
         {/* Cloud destination */}
         <div
           className="absolute z-10 flex flex-col items-center amphub-cloud"
-          style={{ left: '50%', top: '5%', transform: 'translateX(-50%)' }}
+          style={{ left: '50%', top: '10%', transform: 'translateX(-50%)' }}
         >
           <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-[var(--color-primary,#1DB9A0)] to-[var(--color-primary-dark,#0D9B82)] shadow-lg flex items-center justify-center amphub-cloud-icon">
             <CloudIcon className="w-7 h-7 text-white" />
