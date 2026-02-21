@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {
-  title: "Contact Amp | Book a Demo for Building Energy Monitoring in Dubai",
+  title: "Contact Us | Book a Demo for Building Energy Monitoring in Dubai",
   description:
     "Get in touch with Amp for equipment-level energy monitoring. Based in Dubai, DWTC. Book a demo and get live building data within 24 hours. Contact us today.",
   openGraph: {

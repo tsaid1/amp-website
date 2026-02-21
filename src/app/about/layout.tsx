@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {
-  title: "About Amp | Dubai-Based Building Energy Intelligence Company",
+  title: "About Us | Dubai-Based Building Energy Intelligence Company",
   description:
     "Amp helps businesses in the UAE and beyond cut energy waste with plug & play hardware and AI analytics. Trusted by Amazon, IKEA & Masdar. Learn our story.",
   openGraph: {
