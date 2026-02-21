@@ -25,13 +25,13 @@ const spaceGrotesk = Space_Grotesk({
 const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://ampenergy.ae";
 
 export const metadata: Metadata = {
-  metadataBase: new URL(siteUrl),
+  metadataBase: new URL("https://ampenergy.ae"),
   title: {
-    default: "Amp | Equipment-Level Energy Intelligence for Buildings",
+    default: "Amp Energy | Equipment-Level Energy Data for Buildings",
     template: "%s | Amp",
   },
   description:
-    "See where your energy actually goes. Amp delivers real-time, equipment-level energy data for commercial buildings—no BMS required. Live in 24 hours.",
+    "The fastest way to get energy data from your building. Real-time, equipment-level visibility. No BMS required.",
   keywords: [
     "energy monitoring",
     "building energy management",
@@ -52,29 +52,37 @@ export const metadata: Metadata = {
     address: false,
     telephone: false,
   },
+  icons: {
+    icon: [
+      { url: "/favicon.ico", sizes: "any" },
+      { url: "/favicon-32x32.png", sizes: "32x32", type: "image/png" },
+    ],
+    apple: "/apple-touch-icon.png",
+  },
+  manifest: "/site.webmanifest",
   openGraph: {
-    type: "website",
-    locale: "en_US",
-    url: siteUrl,
-    siteName: "Amp",
-    title: "Amp | Equipment-Level Energy Intelligence for Buildings",
+    title: "Amp Energy | Equipment-Level Energy Data",
     description:
-      "See where your energy actually goes. Amp delivers real-time, equipment-level energy data for commercial buildings—no BMS required. Live in 24 hours.",
+      "The fastest way to get energy data from your building. Real-time, equipment-level visibility. No BMS required.",
+    url: "https://ampenergy.ae",
+    siteName: "Amp Energy",
     images: [
       {
-        url: "/images/og-image.png",
+        url: "/images/og-image.jpg",
         width: 1200,
         height: 630,
-        alt: "Amp - Equipment-Level Energy Data",
+        alt: "Amp Energy - Equipment-Level Energy Intelligence for Buildings",
       },
     ],
+    locale: "en_US",
+    type: "website",
   },
   twitter: {
     card: "summary_large_image",
-    title: "Amp | Equipment-Level Energy Intelligence for Buildings",
+    title: "Amp Energy | Equipment-Level Energy Data",
     description:
-      "See where your energy actually goes. Amp delivers real-time, equipment-level energy data for commercial buildings—no BMS required. Live in 24 hours.",
-    images: ["/images/og-image.png"],
+      "The fastest way to get energy data from your building. No BMS required.",
+    images: ["/images/og-image.jpg"],
   },
   robots: {
     index: true,
@@ -86,11 +94,6 @@ export const metadata: Metadata = {
       "max-image-preview": "large",
       "max-snippet": -1,
     },
-  },
-  verification: {
-    // Add these when you have the verification codes
-    // google: "your-google-verification-code",
-    // yandex: "your-yandex-verification-code",
   },
 };
 
