@@ -3,6 +3,9 @@ import { FadeIn } from "@/components/ui/FadeIn";
 export const metadata = {
   title: "Privacy Policy | Amp",
   description: "How Amp collects, uses, and protects your data.",
+  alternates: {
+    canonical: "/privacy",
+  },
 };
 
 const sections = [
