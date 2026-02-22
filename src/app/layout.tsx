@@ -22,12 +22,10 @@ const spaceGrotesk = Space_Grotesk({
   preload: true,
 });
 
-const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://ampenergy.ae";
-
 export const metadata: Metadata = {
   metadataBase: new URL("https://ampenergy.ae"),
   title: {
-    default: "Amp Energy | Equipment-Level Energy Data for Buildings",
+    default: "Amp Energy | Your Building's Energy Platform",
     template: "%s | Amp",
   },
   description:
@@ -61,7 +59,7 @@ export const metadata: Metadata = {
   },
   manifest: "/site.webmanifest",
   openGraph: {
-    title: "Amp Energy | Equipment-Level Energy Data",
+    title: "Amp Energy | Your Building's Energy Platform",
     description:
       "The fastest way to get energy data from your building. Real-time, equipment-level visibility. No BMS required.",
     url: "https://ampenergy.ae",
@@ -79,7 +77,7 @@ export const metadata: Metadata = {
   },
   twitter: {
     card: "summary_large_image",
-    title: "Amp Energy | Equipment-Level Energy Data",
+    title: "Amp Energy | Your Building's Energy Platform",
     description:
       "The fastest way to get energy data from your building. No BMS required.",
     images: ["/images/og-image.jpg"],
@@ -97,30 +95,6 @@ export const metadata: Metadata = {
   },
 };
 
-// JSON-LD Organization Schema
-const organizationSchema = {
-  "@context": "https://schema.org",
-  "@type": "Organization",
-  name: "Amp",
-  legalName: "Amp Inc.",
-  url: siteUrl,
-  logo: `${siteUrl}/images/amp-logo.svg`,
-  description:
-    "See where your energy actually goes. Amp delivers real-time, equipment-level energy data for commercial buildings—no BMS required. Live in 24 hours.",
-  address: {
-    "@type": "PostalAddress",
-    streetAddress: "Floor 8, Tower 4, One Central, DWTC",
-    addressLocality: "Dubai",
-    addressCountry: "UAE",
-  },
-  contactPoint: {
-    "@type": "ContactPoint",
-    email: "hello@ampenergy.ae",
-    contactType: "sales",
-  },
-  sameAs: ["https://www.linkedin.com/company/amp-ai/"],
-};
-
 export default function RootLayout({
   children,
 }: Readonly<{
@@ -128,17 +102,44 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
-      <head>
-        <script
-          type="application/ld+json"
-          dangerouslySetInnerHTML={{
-            __html: JSON.stringify(organizationSchema),
-          }}
-        />
-      </head>
       <body
         className={`${geistSans.variable} ${geistMono.variable} ${spaceGrotesk.variable} antialiased`}
       >
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{
+            __html: JSON.stringify({
+              "@context": "https://schema.org",
+              "@type": "WebSite",
+              name: "Amp",
+              url: "https://ampenergy.ae",
+            }),
+          }}
+        />
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{
+            __html: JSON.stringify({
+              "@context": "https://schema.org",
+              "@type": "Organization",
+              name: "Amp Energy",
+              url: "https://ampenergy.ae",
+              logo: "https://ampenergy.ae/images/amp-logo.svg",
+              contactPoint: {
+                "@type": "ContactPoint",
+                email: "hello@ampenergy.ae",
+                contactType: "sales",
+              },
+              address: {
+                "@type": "PostalAddress",
+                streetAddress: "Floor 8, Tower 4, One Central, DWTC",
+                addressLocality: "Dubai",
+                addressCountry: "AE",
+              },
+              sameAs: ["https://linkedin.com/company/amp-ai/"],
+            }),
+          }}
+        />
         {/* Skip to content link for accessibility */}
         <a
           href="#main-content"
