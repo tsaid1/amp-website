@@ -23,7 +23,10 @@ const spaceGrotesk = Space_Grotesk({
 });
 
 export const metadata: Metadata = {
-  metadataBase: new URL("https://ampenergy.ae"),
+  metadataBase: new URL("https://www.ampenergy.ae"),
+  alternates: {
+    canonical: "/",
+  },
   title: {
     default: "Amp Energy | Your Building's Energy Platform",
     template: "%s | Amp",

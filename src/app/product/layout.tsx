@@ -1,10 +1,12 @@
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {
-  title:
-    "Energy Monitoring Platform & Hardware | Circuit-Level Building Analytics",
+  title: "Energy Monitoring Platform & Hardware | Circuit-Level Analytics",
   description:
     "Monitor every circuit and piece of equipment in your building. AI-powered savings recommendations, real-time alerts & automated reports. See pricing.",
+  alternates: {
+    canonical: "/product",
+  },
   openGraph: {
     title: "Energy Monitoring Platform & Hardware | Circuit-Level Analytics",
     description:

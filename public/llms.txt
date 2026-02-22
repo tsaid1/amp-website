@@ -1,0 +1,42 @@
+# Amp Energy (ampenergy.ae)
+
+## About
+Amp is a building energy intelligence platform based in Dubai, UAE. We provide equipment-level energy monitoring for commercial buildings using plug-and-play IoT hardware and an AI-powered analytics platform. No building management system (BMS) is required. Buildings get live energy data within 24 hours of installation.
+
+## Key Facts
+- Founded: 2021
+- Headquarters: Floor 8, Tower 4, One Central, DWTC, Dubai, UAE
+- Industry: Building Energy Management, IoT, Energy Efficiency
+- Customers include: Amazon, IKEA, Chalhoub Group, Masdar, Buro Happold, FAM House of Recycling, Musanadah
+
+## What We Do
+Amp installs non-invasive hardware on existing electrical panels to monitor energy consumption at the circuit and equipment level. Our cloud platform provides:
+- Real-time equipment-level energy monitoring (chillers, pumps, lighting, etc.)
+- AI-powered energy savings recommendations
+- Building energy efficiency ratings (A-F grade)
+- Automated monthly energy reports
+- Real-time alerts for abnormal equipment behavior
+- Full API access for integration with BI, facilities management, and ESG reporting tools
+
+## Key Differentiators
+- No BMS or pre-existing building systems required
+- Plug-and-play installation in hours, not weeks
+- Live data within 24 hours
+- Works with any building regardless of age or infrastructure
+- 10-20% energy savings typically identified
+- Less than 1 year typical payback period
+- 0.2% margin of error on measurements
+
+## Products
+- **Amp Platform**: Cloud-based energy analytics dashboard with AI recommendations
+- **Amp Hub**: Hardware device that mounts on existing electrical panels
+
+## Pages
+- Homepage: https://www.ampenergy.ae/
+- Product: https://www.ampenergy.ae/product
+- About: https://www.ampenergy.ae/about
+- Contact: https://www.ampenergy.ae/contact
+
+## Contact
+- Email: hello@ampenergy.ae
+- Demo: https://calendly.com/tariq-amp/intro-call
