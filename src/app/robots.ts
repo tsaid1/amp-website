@@ -1,14 +1,14 @@
-import { MetadataRoute } from "next";
+import { MetadataRoute } from 'next';
 
 export default function robots(): MetadataRoute.Robots {
   return {
     rules: [
       {
-        userAgent: "*",
-        allow: "/",
-        disallow: ["/api/", "/_next/data/"],
+        userAgent: '*',
+        allow: '/',
+        disallow: ['/api/', '/_next/'],
       },
     ],
-    sitemap: "https://www.ampenergy.ae/sitemap.xml",
+    sitemap: 'https://ampenergy.ae/sitemap.xml',
   };
 }
