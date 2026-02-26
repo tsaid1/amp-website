@@ -92,8 +92,8 @@ interface DraftData {
 }
 
 function parseDraftMetadata(text: string): DraftData | null {
-  // Match: :package: _DRAFT_DATA:{...}_
-  const match = text.match(/:package:\s*_DRAFT_DATA:([\s\S]*?)_$/);
+  // Match _DRAFT_DATA:{...}_ regardless of emoji prefix (📦 or :package:)
+  const match = text.match(/_DRAFT_DATA:([\s\S]*?)_$/);
   if (!match) return null;
   try {
     return JSON.parse(match[1]);
@@ -108,8 +108,11 @@ async function findDraftDataInThread(
   channelId: string,
   threadTs: string
 ): Promise<DraftData | null> {
+  console.log("Looking for DRAFT_DATA pattern in replies, thread_ts:", threadTs);
   const messages = await getThreadReplies(channelId, threadTs);
+  console.log("Thread replies count:", messages.length);
   for (const msg of messages) {
+    console.log("Reply text preview:", msg.text?.substring(0, 100));
     if (msg.text) {
       const data = parseDraftMetadata(msg.text);
       if (data) return data;
@@ -281,6 +284,7 @@ export async function POST(req: NextRequest) {
             // The reacted message is the draft preview (top-level).
             // Its ts is the thread parent for the metadata reply.
             const draftThreadTs = message.ts;
+            console.log("Draft preview detected, message.ts:", message.ts, "item.ts:", item.ts);
 
             const draftData = await findDraftDataInThread(
               item.channel,
