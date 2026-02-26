@@ -2,12 +2,24 @@ import { NextResponse } from "next/server";
 import { generateTopics } from "@/lib/pipeline/generate";
 import {
   postMessage,
-  formatTopicProposal,
+  postThreadReply,
   type TopicProposal,
 } from "@/lib/pipeline/slack";
 
 // Protect with a simple secret to prevent unauthorized triggers
 const PIPELINE_SECRET = process.env.PIPELINE_SECRET;
+
+function formatTopicReply(topic: TopicProposal, index: number): string {
+  return [
+    `*${index + 1}. ${topic.title}*`,
+    topic.brief,
+    "",
+    `*Keyword:* ${topic.keyword} | *Persona:* ${topic.persona}`,
+    `*Pillar:* ${topic.pillar} | *Timeliness:* ${topic.timeliness}`,
+    "",
+    `📊 _Title: ${topic.title} | Keyword: ${topic.keyword} | Persona: ${topic.persona} | Pillar: ${topic.pillar} | Brief: ${topic.brief}_`,
+  ].join("\n");
+}
 
 export async function POST(request: Request) {
   try {
@@ -33,17 +45,40 @@ export async function POST(request: Request) {
       }
     }
 
-    // Post to Slack
-    const blocks = formatTopicProposal(topics);
-    const slackResponse = await postMessage(
-      `📝 ${topics.length} blog topic proposals ready for review`,
-      blocks
+    // Post header message to Slack
+    const headerResponse = await postMessage(
+      "📝 Blog Topic Proposals — This Week",
+      [
+        {
+          type: "header",
+          text: {
+            type: "plain_text",
+            text: "📝 Blog Topic Proposals — This Week",
+            emoji: true,
+          },
+        },
+        {
+          type: "section",
+          text: {
+            type: "mrkdwn",
+            text: "React with ✅ on a topic to approve it (first ✅ = Tuesday, second ✅ = Thursday)",
+          },
+        },
+      ]
     );
+
+    // Post each topic as a threaded reply
+    for (let i = 0; i < topics.length; i++) {
+      await postThreadReply(
+        headerResponse.ts,
+        formatTopicReply(topics[i], i)
+      );
+    }
 
     return NextResponse.json({
       success: true,
       topicCount: topics.length,
-      slackTs: slackResponse.ts,
+      slackTs: headerResponse.ts,
       topics,
     });
   } catch (error) {

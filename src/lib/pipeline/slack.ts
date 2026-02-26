@@ -59,6 +59,30 @@ export async function getReactions(messageTs: string) {
   return data.message?.reactions || [];
 }
 
+export async function getMessage(channelId: string, messageTs: string) {
+  const res = await fetch(
+    `${SLACK_API}/conversations.history?channel=${channelId}&latest=${messageTs}&inclusive=true&limit=1`,
+    {
+      headers: { Authorization: `Bearer ${SLACK_BOT_TOKEN}` },
+    }
+  );
+  const data = await res.json();
+  if (!data.ok) throw new Error(`Slack API error (conversations.history): ${data.error}`);
+  return data.messages?.[0] || null;
+}
+
+export async function getThreadReplies(channelId: string, threadTs: string) {
+  const res = await fetch(
+    `${SLACK_API}/conversations.replies?channel=${channelId}&ts=${threadTs}`,
+    {
+      headers: { Authorization: `Bearer ${SLACK_BOT_TOKEN}` },
+    }
+  );
+  const data = await res.json();
+  if (!data.ok) throw new Error(`Slack API error (conversations.replies): ${data.error}`);
+  return data.messages || [];
+}
+
 export function formatTopicProposal(topics: TopicProposal[]) {
   const blocks: SlackBlock[] = [
     {
