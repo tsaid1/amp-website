@@ -70,7 +70,7 @@ export default async function BlogPostPage({ params }: PageProps) {
 
   const colorClass =
     CATEGORY_COLORS[post.category] ||
-    "bg-[var(--color-primary)]/15 text-[var(--color-primary)] border-[var(--color-primary)]/20";
+    "bg-teal-50 text-teal-700 border-teal-200";
 
   const jsonLd = {
     "@context": "https://schema.org",
@@ -99,15 +99,15 @@ export default async function BlogPostPage({ params }: PageProps) {
   };
 
   return (
-    <div className="min-h-screen">
+    <div className="min-h-screen bg-[#F7F9F8]">
       {/* JSON-LD */}
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
       />
 
-      {/* Article Header — stays dark */}
-      <header className="relative overflow-hidden border-b border-[var(--section-dark-border)] bg-[var(--section-dark-bg)] pb-12 pt-24 sm:pb-16 sm:pt-32">
+      {/* Article Header — compact dark hero */}
+      <header className="relative overflow-hidden bg-[var(--section-dark-bg)] pb-10 pt-24 sm:pb-12 sm:pt-28">
         <div className="pointer-events-none absolute left-1/2 top-0 h-[400px] w-[600px] -translate-x-1/2 -translate-y-1/2 rounded-full bg-[var(--glow-teal)] blur-3xl" />
 
         <div className="relative mx-auto max-w-3xl px-4 sm:px-6 lg:px-8">
@@ -126,7 +126,7 @@ export default async function BlogPostPage({ params }: PageProps) {
           </nav>
 
           {/* Meta */}
-          <div className="mb-5 flex flex-wrap items-center gap-3">
+          <div className="mb-4 flex flex-wrap items-center gap-3">
             <span
               className={`inline-flex items-center rounded-full border px-3 py-1 text-xs font-medium ${colorClass}`}
             >
@@ -135,7 +135,7 @@ export default async function BlogPostPage({ params }: PageProps) {
             <span className="text-sm text-[var(--section-dark-text-muted)]">
               {post.readingTime}
             </span>
-            <span className="text-[var(--section-dark-text-muted)]/40">·</span>
+            <span className="text-[var(--section-dark-text-muted)] opacity-40">·</span>
             <time
               dateTime={post.date}
               className="text-sm text-[var(--section-dark-text-muted)]"
@@ -145,48 +145,46 @@ export default async function BlogPostPage({ params }: PageProps) {
           </div>
 
           {/* Title */}
-          <h1 className="mb-4 text-3xl font-bold leading-tight tracking-tight text-[var(--section-dark-heading)] sm:text-4xl lg:text-[2.75rem]">
+          <h1 className="text-3xl font-bold leading-tight tracking-tight text-[var(--section-dark-heading)] sm:text-4xl lg:text-[2.75rem]">
             {post.title}
           </h1>
+        </div>
+      </header>
 
-          {/* Description */}
-          <p className="text-lg leading-relaxed text-[var(--section-dark-text-muted)]">
-            {post.description}
-          </p>
-
-          {/* Author */}
-          <div className="mt-6 flex items-center gap-3">
-            <div className="flex h-10 w-10 items-center justify-center rounded-full bg-[var(--color-primary)]/15 text-[var(--color-primary)]">
+      {/* Article Body — white background */}
+      <div className="bg-white">
+        {/* Author + Description bar */}
+        <div className="mx-auto max-w-3xl px-4 sm:px-6 lg:px-8">
+          <div className="flex items-start gap-4 border-b border-gray-100 py-6">
+            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[#F0FAF7] text-[#1DB9A0]">
               <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
                 <path strokeLinecap="round" strokeLinejoin="round" d="M2.25 21h19.5m-18-18v18m10.5-18v18m6-13.5V21M6.75 6.75h.75m-.75 3h.75m-.75 3h.75m3-6h.75m-.75 3h.75m-.75 3h.75M6.75 21v-3.375c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125V21M3 3h12m-.75 4.5H21m-3.75 0h.008v.008h-.008v-.008zm0 3h.008v.008h-.008v-.008zm0 3h.008v.008h-.008v-.008z" />
               </svg>
             </div>
-            <div>
-              <p className="text-sm font-medium text-[var(--section-dark-heading)]">
+            <div className="min-w-0 flex-1">
+              <p className="text-sm font-medium text-gray-900">
                 {post.author}
               </p>
-              <p className="text-xs text-[var(--section-dark-text-muted)]">
-                Energy Intelligence Platform
+              <p className="mt-1 text-sm leading-relaxed text-gray-500">
+                {post.description}
               </p>
             </div>
           </div>
         </div>
-      </header>
 
-      {/* Article Body — light theme */}
-      <div className="bg-[#FAFBFC]">
-        <article className="mx-auto max-w-[720px] px-4 py-12 sm:px-6 sm:py-16 lg:px-8">
+        {/* Article content */}
+        <article className="mx-auto max-w-3xl px-4 py-12 sm:px-6 sm:py-16 lg:px-8">
           <MarkdownRenderer content={post.content} />
         </article>
 
         {/* Keywords / Tags */}
         {post.keywords.length > 0 && (
-          <div className="mx-auto max-w-[720px] border-t border-[#E2E8E7] px-4 py-8 sm:px-6 lg:px-8">
+          <div className="mx-auto max-w-3xl border-t border-gray-100 px-4 py-8 sm:px-6 lg:px-8">
             <div className="flex flex-wrap gap-2">
               {post.keywords.map((keyword) => (
                 <span
                   key={keyword}
-                  className="rounded-full border border-gray-200 bg-white px-3 py-1 text-xs text-[#6B7B78]"
+                  className="rounded-full border border-gray-200 bg-[#F7F9F8] px-3 py-1 text-xs text-gray-500"
                 >
                   {keyword}
                 </span>
@@ -194,63 +192,68 @@ export default async function BlogPostPage({ params }: PageProps) {
             </div>
           </div>
         )}
+      </div>
 
-        {/* Related Posts */}
-        {relatedPosts.length > 0 && (
-          <section className="border-t border-[#E2E8E7]">
-            <div className="mx-auto max-w-[720px] px-4 py-12 sm:px-6 sm:py-16 lg:px-8">
-              <h2 className="mb-6 text-xl font-semibold text-[#0A1F1C]">
-                Related Articles
-              </h2>
-              <div className="grid gap-4 sm:grid-cols-2">
-                {relatedPosts.map((rp) => (
+      {/* Related Posts — subtle gray background */}
+      {relatedPosts.length > 0 && (
+        <section className="bg-[#F7F9F8]">
+          <div className="mx-auto max-w-3xl px-4 py-12 sm:px-6 sm:py-16 lg:px-8">
+            <h2 className="mb-6 text-xl font-semibold text-gray-900">
+              Related Articles
+            </h2>
+            <div className="grid gap-4 sm:grid-cols-2">
+              {relatedPosts.map((rp) => {
+                const rpColor =
+                  CATEGORY_COLORS[rp.category] ||
+                  "bg-teal-50 text-teal-700 border-teal-200";
+                return (
                   <Link
                     key={rp.slug}
                     href={`/blog/${rp.slug}`}
-                    className="group rounded-xl border border-gray-200 bg-white p-5 shadow-sm transition-all duration-200 hover:shadow-md hover:border-gray-300"
+                    className="group rounded-xl border border-gray-200 bg-white p-5 shadow-sm transition-shadow duration-200 hover:shadow-md"
                   >
-                    <p className="mb-1 text-xs text-[#6B7B78]">
-                      {getCategoryLabel(rp.category)}
-                    </p>
-                    <h3 className="text-sm font-semibold leading-snug text-[#0A1F1C] transition-colors group-hover:text-[#1DB9A0]">
+                    <div className="mb-2 flex items-center gap-2">
+                      <span className={`inline-flex items-center rounded-full border px-2.5 py-0.5 text-[11px] font-medium ${rpColor}`}>
+                        {getCategoryLabel(rp.category)}
+                      </span>
+                      <span className="text-xs text-gray-400">{rp.readingTime}</span>
+                    </div>
+                    <h3 className="text-sm font-semibold leading-snug text-gray-900 transition-colors group-hover:text-[#1DB9A0]">
                       {rp.title}
                     </h3>
                   </Link>
-                ))}
-              </div>
+                );
+              })}
             </div>
-          </section>
-        )}
-      </div>
+          </div>
+        </section>
+      )}
 
-      {/* CTA */}
-      <section className="border-t border-[var(--section-dark-border)]">
+      {/* CTA — light background with teal accent */}
+      <section className="bg-white">
         <div className="mx-auto max-w-3xl px-4 py-12 sm:px-6 sm:py-16 lg:px-8">
-          <div className="relative overflow-hidden rounded-2xl border border-[var(--border-accent)] bg-gradient-to-br from-[var(--section-dark-bg-accent)] to-[var(--section-dark-bg-subtle)] p-8 text-center sm:p-12">
-            <div className="pointer-events-none absolute -right-16 -top-16 h-48 w-48 rounded-full bg-[var(--glow-teal)] blur-3xl" />
-            <div className="relative">
-              <h2 className="mb-3 text-2xl font-bold text-[var(--section-dark-heading)]">
-                See your building&apos;s energy data
-              </h2>
-              <p className="mb-6 text-[var(--section-dark-text-muted)]">
-                Equipment-level visibility in 24 hours. No BMS required.
-              </p>
-              <div className="flex flex-col items-center gap-3 sm:flex-row sm:justify-center">
-                <a
-                  href="https://calendly.com/tariq-amp/intro-call"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="btn-lift inline-flex h-11 items-center justify-center rounded-full bg-[var(--color-btn-primary)] px-7 text-sm font-medium text-white transition-colors hover:bg-[var(--color-btn-primary-hover)]"
-                >
-                  Book a Demo
-                </a>
-                <Link
-                  href="/contact"
-                  className="inline-flex h-11 items-center justify-center rounded-full border border-[var(--section-dark-border)] px-7 text-sm font-medium text-[var(--section-dark-text)] transition-colors hover:border-[var(--border-accent)] hover:text-[var(--color-primary)]"
-                >
-                  Contact Sales
-                </Link>
-              </div>
+          <div className="rounded-2xl border border-gray-200 bg-[#F7F9F8] p-8 text-center sm:p-12">
+            <h2 className="mb-3 text-2xl font-bold text-gray-900">
+              See your building&apos;s energy data
+            </h2>
+            <p className="mb-6 text-gray-500">
+              Equipment-level visibility in 24 hours. No BMS required.
+            </p>
+            <div className="flex flex-col items-center gap-3 sm:flex-row sm:justify-center">
+              <a
+                href="https://calendly.com/tariq-amp/intro-call"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="btn-lift inline-flex h-11 items-center justify-center rounded-full bg-[var(--color-btn-primary)] px-7 text-sm font-medium text-white transition-colors hover:bg-[var(--color-btn-primary-hover)]"
+              >
+                Book a Demo
+              </a>
+              <Link
+                href="/contact"
+                className="inline-flex h-11 items-center justify-center rounded-full border border-gray-300 px-7 text-sm font-medium text-gray-700 transition-colors hover:border-[#1DB9A0] hover:text-[#1DB9A0]"
+              >
+                Contact Sales
+              </Link>
             </div>
           </div>
         </div>

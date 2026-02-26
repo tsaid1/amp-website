@@ -35,11 +35,11 @@ function formatDate(dateStr: string): string {
 function BlogCard({ post }: { post: BlogPostMeta }) {
   const colorClass =
     CATEGORY_COLORS[post.category] ||
-    "bg-[var(--color-primary)]/15 text-[var(--color-primary)] border-[var(--color-primary)]/20";
+    "bg-teal-50 text-teal-700 border-teal-200";
 
   return (
     <Link href={`/blog/${post.slug}`} className="group block">
-      <article className="relative h-full rounded-2xl border border-gray-200 bg-white p-6 shadow-sm transition-all duration-300 hover:shadow-md hover:border-gray-300">
+      <article className="relative flex h-full flex-col rounded-xl border border-gray-200 bg-white p-6 shadow-sm transition-shadow duration-300 hover:shadow-md">
         {/* Category + Reading Time */}
         <div className="mb-4 flex items-center gap-3">
           <span
@@ -47,18 +47,18 @@ function BlogCard({ post }: { post: BlogPostMeta }) {
           >
             {getCategoryLabel(post.category)}
           </span>
-          <span className="text-xs text-[#6B7B78]">
+          <span className="text-xs text-gray-400">
             {post.readingTime}
           </span>
         </div>
 
         {/* Title */}
-        <h2 className="mb-3 text-lg font-semibold leading-snug text-[#0A1F1C] transition-colors duration-200 group-hover:text-[#1DB9A0]">
+        <h2 className="mb-3 text-lg font-semibold leading-snug text-gray-900 transition-colors duration-200 group-hover:text-[#1DB9A0]">
           {post.title}
         </h2>
 
         {/* Excerpt */}
-        <p className="mb-5 line-clamp-3 text-sm leading-relaxed text-[#4A5E5B]">
+        <p className="mb-5 line-clamp-3 flex-1 text-sm leading-relaxed text-gray-600">
           {post.description}
         </p>
 
@@ -66,7 +66,7 @@ function BlogCard({ post }: { post: BlogPostMeta }) {
         <div className="flex items-center justify-between">
           <time
             dateTime={post.date}
-            className="text-xs text-[#6B7B78]"
+            className="text-xs text-gray-400"
           >
             {formatDate(post.date)}
           </time>
@@ -96,9 +96,9 @@ export default function BlogPage() {
   const posts = getAllPosts();
 
   return (
-    <div className="min-h-screen bg-[var(--section-dark-bg)]">
-      {/* Hero */}
-      <section className="relative overflow-hidden border-b border-[var(--section-dark-border)] pb-16 pt-24 sm:pb-20 sm:pt-32">
+    <div className="min-h-screen bg-[#F7F9F8]">
+      {/* Hero — dark branded header */}
+      <section className="relative overflow-hidden bg-[var(--section-dark-bg)] pb-16 pt-24 sm:pb-20 sm:pt-32">
         {/* Background grid pattern */}
         <div
           className="pointer-events-none absolute inset-0 opacity-[0.03]"
@@ -130,8 +130,8 @@ export default function BlogPage() {
         </div>
       </section>
 
-      {/* Posts Grid */}
-      <section className="bg-[#F8FAFA]">
+      {/* Posts Grid — light background */}
+      <section>
         <div className="mx-auto max-w-7xl px-4 py-16 sm:px-6 sm:py-20 lg:px-8">
           {posts.length === 0 ? (
             <div className="flex flex-col items-center justify-center py-20 text-center">
@@ -150,10 +150,10 @@ export default function BlogPage() {
                   />
                 </svg>
               </div>
-              <h2 className="mb-2 text-xl font-semibold text-[#0A1F1C]">
+              <h2 className="mb-2 text-xl font-semibold text-gray-900">
                 Coming Soon
               </h2>
-              <p className="max-w-md text-[#6B7B78]">
+              <p className="max-w-md text-gray-500">
                 We&apos;re preparing expert insights on building energy intelligence,
                 compliance, and sustainability. Check back soon.
               </p>
@@ -168,8 +168,8 @@ export default function BlogPage() {
         </div>
       </section>
 
-      {/* CTA Banner */}
-      <section className="border-t border-[var(--section-dark-border)]">
+      {/* CTA Banner — dark for contrast */}
+      <section className="border-t border-gray-200">
         <div className="mx-auto max-w-7xl px-4 py-16 sm:px-6 lg:px-8">
           <div className="relative overflow-hidden rounded-2xl border border-[var(--border-accent)] bg-gradient-to-br from-[var(--section-dark-bg-accent)] to-[var(--section-dark-bg-subtle)] p-8 sm:p-12">
             <div className="pointer-events-none absolute -right-20 -top-20 h-60 w-60 rounded-full bg-[var(--glow-teal)] blur-3xl" />
