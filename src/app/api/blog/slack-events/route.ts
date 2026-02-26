@@ -5,11 +5,16 @@ import {
   getMessage,
   getThreadReplies,
   postThreadReply,
+  postMessage,
+  formatDraftPreview,
+  type DraftPreview,
 } from "@/lib/pipeline/slack";
+import { generateBlogPost } from "@/lib/pipeline/generate";
+import { generateSlug } from "@/lib/pipeline/publish";
+import readingTime from "reading-time";
 
 const SLACK_SIGNING_SECRET = process.env.SLACK_SIGNING_SECRET;
 const SLACK_CHANNEL_ID = process.env.SLACK_CHANNEL_ID;
-const PIPELINE_SECRET = process.env.PIPELINE_SECRET;
 
 // --- Slack request signature verification ---
 
@@ -87,44 +92,49 @@ async function countCheckmarksInThread(
   return total;
 }
 
-// --- Trigger draft generation asynchronously ---
+// --- Generate draft directly (no HTTP self-call) ---
 
-async function triggerDraftGeneration(
+async function generateDraft(
   topic: TopicData,
   publishDay: string,
   threadTs: string
 ) {
-  const baseUrl = process.env.SITE_URL || "https://www.ampenergy.ae";
+  console.log("Starting generateBlogPost for:", topic.title);
+  const result = await generateBlogPost(
+    topic.title,
+    topic.keyword,
+    topic.persona,
+    topic.pillar,
+    topic.brief
+  );
+  console.log("generateBlogPost completed, content length:", result.content.length);
 
-  const url = `${baseUrl}/api/blog/generate-post`;
-  const requestBody = {
+  const slug = generateSlug(topic.title);
+  const stats = readingTime(result.content);
+  const wordCount = result.content.split(/\s+/).length;
+  console.log("Draft stats — slug:", slug, "readingTime:", stats.text, "words:", wordCount);
+
+  const draft: DraftPreview = {
     title: topic.title,
+    description: result.description,
     keyword: topic.keyword,
-    persona: topic.persona,
-    pillar: topic.pillar,
-    brief: topic.brief,
+    readingTime: stats.text,
+    wordCount,
+    contentPreview: result.content.slice(0, 500).replace(/\n/g, " ") + "...",
     publishDay,
+    slug,
+    fullContent: result.content,
   };
 
-  console.log("Generate-post URL:", url);
-  console.log("Generate-post request body:", JSON.stringify(requestBody, null, 2));
+  console.log("Posting draft preview to Slack");
+  const blocks = formatDraftPreview(draft);
+  const slackResponse = await postMessage(
+    `📄 Draft ready for review: "${topic.title}"`,
+    blocks
+  );
+  console.log("Draft preview posted, ts:", slackResponse.ts);
 
-  try {
-    const response = await fetch(url, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${PIPELINE_SECRET}`,
-      },
-      body: JSON.stringify(requestBody),
-    });
-    console.log("Generate-post response:", response.status);
-  } catch (err) {
-    console.error("Generate-post fetch error:", err);
-    postThreadReply(threadTs, `❌ Failed to trigger draft generation: ${err instanceof Error ? err.message : err}`).catch(
-      () => {}
-    );
-  }
+  await postThreadReply(threadTs, `✅ Draft generated and posted for review: *${topic.title}*`);
 }
 
 // --- Route handler ---
@@ -235,9 +245,9 @@ export async function POST(req: NextRequest) {
           );
           console.log("Thread confirmation posted");
 
-          console.log("Triggering draft generation for:", publishDay, topic.title);
-          // Fire off draft generation
-          triggerDraftGeneration(topic, publishDay, threadTs);
+          console.log("Generating draft for:", publishDay, topic.title);
+          await generateDraft(topic, publishDay, threadTs);
+          console.log("Draft generation complete for:", topic.title);
         } catch (err) {
           console.error("Error at async reaction handler:", err);
         }
