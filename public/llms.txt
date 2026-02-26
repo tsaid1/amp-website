@@ -31,10 +31,18 @@ Amp installs non-invasive hardware on existing electrical panels to monitor ener
 - **Amp Platform**: Cloud-based energy analytics dashboard with AI recommendations
 - **Amp Hub**: Hardware device that mounts on existing electrical panels
 
+## Blog
+Amp publishes insights on building energy management, UAE climate compliance, and energy efficiency for commercial buildings.
+
+Recent posts:
+- No BMS? How Modern Buildings Monitor Energy Without It: https://www.ampenergy.ae/blog/no-bms-heres-how-modern-buildings-monitor-energy-without-it
+- UAE Climate Law and Your Buildings: What Facility Managers Need to Know: https://www.ampenergy.ae/blog/uae-climate-law-what-facility-managers-need-to-know
+
 ## Pages
 - Homepage: https://www.ampenergy.ae/
 - Product: https://www.ampenergy.ae/product
 - About: https://www.ampenergy.ae/about
+- Blog: https://www.ampenergy.ae/blog
 - Contact: https://www.ampenergy.ae/contact
 
 ## Contact

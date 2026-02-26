@@ -432,7 +432,89 @@ export default function Home() {
         </div>
       </section>
 
-      {/* Section 7: Final CTA */}
+      {/* Section 7: Latest from the Blog */}
+      <section
+        className="bg-[var(--background)] py-[var(--space-section-lg)]"
+        aria-labelledby="blog-heading"
+      >
+        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+          <FadeIn>
+            <div className="flex items-end justify-between">
+              <div>
+                <p className="text-sm font-medium uppercase tracking-wider" style={{ color: "var(--color-primary)" }}>
+                  Insights
+                </p>
+                <h2
+                  id="blog-heading"
+                  className="mt-2 font-display text-[var(--text-3xl)] font-bold tracking-tight text-[var(--foreground-heading)]"
+                >
+                  Latest from the blog
+                </h2>
+              </div>
+              <Link
+                href="/blog"
+                className="hidden sm:inline-flex items-center gap-1 text-sm font-medium text-[var(--color-primary)] transition-colors hover:text-[var(--color-primary-hover)]"
+              >
+                View all
+                <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M13.5 4.5L21 12m0 0l-7.5 7.5M21 12H3" />
+                </svg>
+              </Link>
+            </div>
+          </FadeIn>
+
+          <FadeInStagger staggerDelay={0.15}>
+            <div className="mt-10 grid gap-6 sm:grid-cols-2">
+              <FadeInStaggerItem index={0}>
+                <Link
+                  href="/blog/no-bms-heres-how-modern-buildings-monitor-energy-without-it"
+                  className="group block rounded-xl border border-[var(--border)] bg-[var(--background-subtle)] p-6 transition-shadow duration-200 hover:shadow-md"
+                >
+                  <span className="inline-flex items-center rounded-full border border-sky-200 bg-sky-50 px-3 py-1 text-xs font-medium text-sky-700">
+                    Technology &amp; Innovation
+                  </span>
+                  <h3 className="mt-4 font-display text-lg font-semibold text-[var(--foreground)] transition-colors group-hover:text-[var(--color-primary)]">
+                    No BMS? How Modern Buildings Monitor Energy Without It
+                  </h3>
+                  <p className="mt-2 line-clamp-2 text-sm text-[var(--muted)]">
+                    Discover how modern energy monitoring works without a BMS. Learn about wireless IoT sensors, clamp-on technology, and plug-and-play deployment.
+                  </p>
+                </Link>
+              </FadeInStaggerItem>
+              <FadeInStaggerItem index={1}>
+                <Link
+                  href="/blog/uae-climate-law-what-facility-managers-need-to-know"
+                  className="group block rounded-xl border border-[var(--border)] bg-[var(--background-subtle)] p-6 transition-shadow duration-200 hover:shadow-md"
+                >
+                  <span className="inline-flex items-center rounded-full border border-amber-200 bg-amber-50 px-3 py-1 text-xs font-medium text-amber-700">
+                    Compliance &amp; Regulation
+                  </span>
+                  <h3 className="mt-4 font-display text-lg font-semibold text-[var(--foreground)] transition-colors group-hover:text-[var(--color-primary)]">
+                    UAE Climate Law: What Facility Managers Need to Know
+                  </h3>
+                  <p className="mt-2 line-clamp-2 text-sm text-[var(--muted)]">
+                    UAE Federal Decree-Law No. 11 mandates Scope 2 emissions reporting by May 2026. Here&apos;s what facility managers need to know about compliance.
+                  </p>
+                </Link>
+              </FadeInStaggerItem>
+            </div>
+          </FadeInStagger>
+
+          <div className="mt-8 text-center sm:hidden">
+            <Link
+              href="/blog"
+              className="inline-flex items-center gap-1 text-sm font-medium text-[var(--color-primary)]"
+            >
+              View all posts
+              <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M13.5 4.5L21 12m0 0l-7.5 7.5M21 12H3" />
+              </svg>
+            </Link>
+          </div>
+        </div>
+      </section>
+
+      {/* Section 8: Final CTA */}
       <section
         className="bg-[var(--background)] py-[var(--space-section-lg)]"
         aria-labelledby="cta-heading"

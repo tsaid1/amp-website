@@ -87,7 +87,7 @@ const platformFeatures = [
   {
     id: "api-access",
     title: "Full API Access",
-    description: "Connect to any system—BI tools, facilities management, or ESG reporting.",
+    description: "Connect to any system—BI tools, facilities management, or ESG reporting. Ready for UAE climate law compliance.",
     icon: CodeIcon,
     large: false,
     visualization: VizApi,
@@ -393,7 +393,13 @@ function ProductPageContent() {
               </h2>
               <p className="mt-4 text-lg text-[var(--muted)]">
                 Zero shutdown installation. No building management system required.
-                Revenue-grade accuracy from day one.
+                Revenue-grade accuracy from day one.{" "}
+                <Link
+                  href="/blog/no-bms-heres-how-modern-buildings-monitor-energy-without-it"
+                  className="text-[var(--color-primary)] hover:underline"
+                >
+                  Learn how it works&nbsp;&rarr;
+                </Link>
               </p>
             </div>
           </FadeIn>
