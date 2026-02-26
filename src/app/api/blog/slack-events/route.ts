@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { waitUntil } from "@vercel/functions";
 import crypto from "crypto";
 import {
   getMessage,
@@ -174,8 +175,8 @@ export async function POST(req: NextRequest) {
         return NextResponse.json({ ok: true });
       }
 
-      // Process async — respond to Slack immediately
-      (async () => {
+      // Process async — waitUntil keeps the function alive after returning 200
+      async function handleReaction() {
         try {
           // Fetch the reacted-to message to get topic data
           console.log("Fetching message:", item.channel, item.ts);
@@ -230,7 +231,9 @@ export async function POST(req: NextRequest) {
         } catch (err) {
           console.error("Error at async reaction handler:", err);
         }
-      })();
+      }
+
+      waitUntil(handleReaction());
 
       return NextResponse.json({ ok: true });
     }
