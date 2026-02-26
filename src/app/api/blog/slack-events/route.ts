@@ -178,20 +178,31 @@ export async function POST(req: NextRequest) {
       (async () => {
         try {
           // Fetch the reacted-to message to get topic data
+          console.log("Fetching message:", item.channel, item.ts);
           const message = await getMessage(item.channel, item.ts);
           console.log("Fetched message text:", message?.text?.slice(0, 200));
-          if (!message?.text) return;
+          if (!message?.text) {
+            console.log("Ignoring: message has no text");
+            return;
+          }
 
           const topic = parseTopicMetadata(message.text);
           console.log("Parsed topic metadata:", topic);
-          if (!topic) return; // Not a topic message — ignore
+          if (!topic) {
+            console.log("Ignoring: no topic metadata found in message");
+            return;
+          }
 
           // This message is a thread reply. Get the parent thread_ts.
           const threadTs = message.thread_ts;
           console.log("Thread ts:", threadTs);
-          if (!threadTs) return; // Not in a thread — ignore
+          if (!threadTs) {
+            console.log("Ignoring: message is not in a thread");
+            return;
+          }
 
           // Count total ✅ across the thread to determine Tuesday vs Thursday
+          console.log("Fetching thread replies for:", item.channel, threadTs);
           const totalCheckmarks = await countCheckmarksInThread(
             item.channel,
             threadTs
@@ -206,16 +217,18 @@ export async function POST(req: NextRequest) {
           const publishDay = totalCheckmarks <= 1 ? "Tuesday" : "Thursday";
 
           // Post confirmation in thread
+          console.log("Posting thread confirmation for:", publishDay, topic.title);
           await postThreadReply(
             threadTs,
             `⏳ Generating ${publishDay}'s draft: *${topic.title}*...`
           );
+          console.log("Thread confirmation posted");
 
           console.log("Triggering draft generation for:", publishDay, topic.title);
           // Fire off draft generation
           triggerDraftGeneration(topic, publishDay, threadTs);
         } catch (err) {
-          console.error("Error handling reaction event:", err);
+          console.error("Error at async reaction handler:", err);
         }
       })();
 
