@@ -1,6 +1,6 @@
 import { MetadataRoute } from 'next';
 
-const BASE_URL = 'https://ampenergy.ae';
+const BASE_URL = 'https://www.ampenergy.ae';
 
 // Add blog post slugs here as you publish new content
 const blogPosts: { slug: string; lastModified: string }[] = [
