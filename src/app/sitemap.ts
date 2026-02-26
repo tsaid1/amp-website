@@ -1,12 +1,7 @@
 import { MetadataRoute } from 'next';
+import { getAllPosts } from '@/lib/blog';
 
 const BASE_URL = 'https://www.ampenergy.ae';
-
-// Add blog post slugs here as you publish new content
-const blogPosts: { slug: string; lastModified: string }[] = [
-  // { slug: 'getting-started-with-energy-monitoring', lastModified: '2026-02-20' },
-  // { slug: 'case-study-ikea', lastModified: '2026-02-15' },
-];
 
 export default function sitemap(): MetadataRoute.Sitemap {
   const staticPages: MetadataRoute.Sitemap = [
@@ -48,9 +43,10 @@ export default function sitemap(): MetadataRoute.Sitemap {
     },
   ];
 
-  const blogPages: MetadataRoute.Sitemap = blogPosts.map((post) => ({
+  const posts = getAllPosts();
+  const blogPages: MetadataRoute.Sitemap = posts.map((post) => ({
     url: `${BASE_URL}/blog/${post.slug}`,
-    lastModified: new Date(post.lastModified),
+    lastModified: new Date(post.date),
     changeFrequency: 'monthly' as const,
     priority: 0.6,
   }));

@@ -8,6 +8,7 @@ import { MenuIcon, CloseIcon } from "@/components/icons";
 
 const navLinks = [
   { href: "/product", label: "Product" },
+  { href: "/blog", label: "Blog" },
   { href: "/about", label: "About" },
   { href: "/contact", label: "Contact" },
 ];

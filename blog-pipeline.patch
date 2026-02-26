@@ -1,0 +1,2105 @@
+diff --git a/.github/workflows/blog-pipeline.yml b/.github/workflows/blog-pipeline.yml
+new file mode 100644
+index 0000000..2c473f5
+--- /dev/null
++++ b/.github/workflows/blog-pipeline.yml
+@@ -0,0 +1,128 @@
++name: Blog Pipeline
++
++on:
++  schedule:
++    # Generate topics every Friday at 5:00 AM UTC (9:00 AM GST)
++    - cron: '0 5 * * 5'
++    # Generate Tuesday's draft on Monday at 4:00 AM UTC (8:00 AM GST)
++    - cron: '0 4 * * 1'
++    # Generate Thursday's draft on Wednesday at 4:00 AM UTC (8:00 AM GST)
++    - cron: '0 4 * * 3'
++  workflow_dispatch:
++    inputs:
++      action:
++        description: 'Pipeline action to trigger'
++        required: true
++        type: choice
++        options:
++          - generate-topics
++          - generate-post
++          - publish
++      title:
++        description: 'Blog post title (for generate-post)'
++        required: false
++      keyword:
++        description: 'Target keyword (for generate-post)'
++        required: false
++      persona:
++        description: 'Target persona (for generate-post)'
++        required: false
++      pillar:
++        description: 'Content pillar (for generate-post)'
++        required: false
++      brief:
++        description: 'Topic brief (for generate-post)'
++        required: false
++
++env:
++  SITE_URL: ${{ secrets.SITE_URL || 'https://www.ampenergy.ae' }}
++  PIPELINE_SECRET: ${{ secrets.PIPELINE_SECRET }}
++
++jobs:
++  generate-topics:
++    if: github.event.schedule == '0 5 * * 5' || (github.event_name == 'workflow_dispatch' && github.event.inputs.action == 'generate-topics')
++    runs-on: ubuntu-latest
++    steps:
++      - name: Generate blog topic proposals
++        run: |
++          response=$(curl -s -w "\n%{http_code}" -X POST \
++            "${{ env.SITE_URL }}/api/blog/generate-topics" \
++            -H "Content-Type: application/json" \
++            -H "Authorization: Bearer ${{ env.PIPELINE_SECRET }}")
++          
++          http_code=$(echo "$response" | tail -1)
++          body=$(echo "$response" | head -n -1)
++          
++          echo "HTTP Status: $http_code"
++          echo "Response: $body"
++          
++          if [ "$http_code" != "200" ]; then
++            echo "::error::Topic generation failed with status $http_code"
++            exit 1
++          fi
++
++  generate-post:
++    if: github.event.schedule == '0 4 * * 1' || github.event.schedule == '0 4 * * 3' || (github.event_name == 'workflow_dispatch' && github.event.inputs.action == 'generate-post')
++    runs-on: ubuntu-latest
++    steps:
++      - name: Generate blog post draft
++        run: |
++          # For manual triggers, use provided inputs
++          # For scheduled triggers, this would be called by the approval flow
++          TITLE="${{ github.event.inputs.title || 'Auto-generated' }}"
++          KEYWORD="${{ github.event.inputs.keyword || '' }}"
++          PERSONA="${{ github.event.inputs.persona || 'Facility Champion' }}"
++          PILLAR="${{ github.event.inputs.pillar || 'efficiency' }}"
++          BRIEF="${{ github.event.inputs.brief || '' }}"
++          
++          DAY_OF_WEEK=$(date +%u)
++          if [ "$DAY_OF_WEEK" = "1" ]; then
++            PUBLISH_DAY="Tuesday"
++          elif [ "$DAY_OF_WEEK" = "3" ]; then
++            PUBLISH_DAY="Thursday"
++          else
++            PUBLISH_DAY="Next scheduled day"
++          fi
++          
++          response=$(curl -s -w "\n%{http_code}" -X POST \
++            "${{ env.SITE_URL }}/api/blog/generate-post" \
++            -H "Content-Type: application/json" \
++            -H "Authorization: Bearer ${{ env.PIPELINE_SECRET }}" \
++            -d "{
++              \"title\": \"$TITLE\",
++              \"keyword\": \"$KEYWORD\",
++              \"persona\": \"$PERSONA\",
++              \"pillar\": \"$PILLAR\",
++              \"brief\": \"$BRIEF\",
++              \"publishDay\": \"$PUBLISH_DAY\"
++            }")
++          
++          http_code=$(echo "$response" | tail -1)
++          body=$(echo "$response" | head -n -1)
++          
++          echo "HTTP Status: $http_code"
++          echo "Response: $body"
++
++  publish:
++    if: github.event_name == 'workflow_dispatch' && github.event.inputs.action == 'publish'
++    runs-on: ubuntu-latest
++    steps:
++      - name: Checkout repo
++        uses: actions/checkout@v4
++        with:
++          token: ${{ secrets.GITHUB_TOKEN }}
++      
++      - name: Publish approved post
++        run: |
++          echo "Publishing post..."
++          # The publish endpoint creates the MDX file
++          # Then we commit and push
++          
++      - name: Commit and push
++        run: |
++          git config user.name "Amp Blog Pipeline"
++          git config user.email "blog-pipeline@ampenergy.ae"
++          git add content/blog/
++          git diff --staged --quiet && echo "No changes to commit" && exit 0
++          git commit -m "blog: publish new post [automated]"
++          git push
+diff --git a/content/blog/uae-climate-law-what-facility-managers-need-to-know.mdx b/content/blog/uae-climate-law-what-facility-managers-need-to-know.mdx
+new file mode 100644
+index 0000000..673461e
+--- /dev/null
++++ b/content/blog/uae-climate-law-what-facility-managers-need-to-know.mdx
+@@ -0,0 +1,86 @@
++---
++title: "UAE Climate Law and Your Buildings: What Facility Managers Need to Know Before May 2026"
++description: "UAE Federal Decree-Law No. 11 mandates Scope 2 emissions reporting by May 2026. Here's what facility managers and sustainability leaders need to understand about compliance — and why equipment-level energy data is the foundation."
++date: "2026-02-26"
++author: "Amp Team"
++category: "compliance"
++keywords:
++  - UAE climate law
++  - Federal Decree-Law No. 11
++  - Scope 2 emissions
++  - building energy monitoring
++  - facility management UAE
++  - energy compliance Dubai
++featured: true
++---
++
++## The Clock Is Ticking
++
++UAE Federal Decree-Law No. 11 of 2024 has fundamentally changed the energy landscape for commercial buildings in the Emirates. For the first time, organizations operating in the UAE are required to measure and report their Scope 1 and Scope 2 greenhouse gas emissions using approved methodologies.
++
++The compliance deadline is **May 30, 2026** — and the penalties for non-compliance range from **AED 500,000 to AED 2,000,000**.
++
++For facility managers and sustainability leaders responsible for commercial building portfolios, this isn't a distant regulatory concern. It's an operational reality that requires infrastructure changes now.
++
++## What the Law Actually Requires
++
++At its core, the decree requires organizations to demonstrate auditable measurement of their emissions. For most commercial buildings, the largest emissions category is Scope 2 — emissions from purchased electricity.
++
++To calculate accurate Scope 2 emissions, you need to know:
++
++- How much energy each building in your portfolio consumes
++- Which equipment categories are driving that consumption
++- How consumption patterns change over time
++- Whether energy reduction strategies are measurably working
++
++Monthly utility bills give you a single total number. That's not enough for methodology-approved reporting. The law requires granularity, traceability, and the ability to demonstrate that your numbers are based on actual measurement, not estimates.
++
++## Why Utility Bills Aren't Enough
++
++Most commercial buildings in the UAE and KSA currently rely on monthly utility statements for energy data. While these provide a headline consumption figure, they fall short of what the new regulations demand.
++
++Consider what a utility bill doesn't tell you: which of your 30 HVAC units is consuming 40% more energy than it should, whether your lighting runs at full capacity during unoccupied hours, or whether your chillers are degrading in efficiency month over month.
++
++Without equipment-level visibility, compliance reports are built on assumptions. And assumptions don't survive audits.
++
++## The Equipment-Level Data Advantage
++
++Equipment-level energy monitoring provides the measurement infrastructure that the law requires. By monitoring individual circuits and equipment — HVAC, lighting, refrigeration, plug loads — facility teams can produce Scope 2 data that is both accurate and actionable.
++
++This isn't just about compliance. The same data that satisfies regulatory requirements also reveals operational waste. Buildings monitored at the equipment level consistently uncover **10–20% energy waste** that was previously invisible.
++
++The insight is powerful: compliance and cost reduction are not competing priorities. They're the same project.
++
++## What You Should Do Now
++
++With the May 2026 deadline approaching, facility managers should be taking concrete steps today:
++
++1. **Audit your current measurement capability.** Can you report energy consumption by equipment category, not just by building? If the answer is no, you have a gap.
++
++2. **Deploy measurement infrastructure.** Equipment-level monitoring solutions can be installed in hours with zero disruption to building operations — no BMS required, no IT infrastructure changes.
++
++3. **Build a baseline.** You need several months of continuous data to establish credible baselines for your compliance reports. Starting now gives you a meaningful reporting period before the deadline.
++
++4. **Connect your data to your sustainability reporting framework.** Ensure your energy measurement data can feed into ESG reports, green building certification applications, and the specific formats required by the UAE's reporting requirements.
++
++## The Bottom Line
++
++The UAE climate law isn't optional, and compliance is not something you can estimate your way through. Buildings need real measurement infrastructure, and the window to deploy it is narrowing.
++
++The facility managers and sustainability leaders who act now will not only meet their compliance obligations — they'll have the data to reduce costs, improve building ratings, and position their organizations as genuine sustainability leaders in the region.
++
++---
++
++## Frequently Asked Questions
++
++### What is Scope 2 emissions reporting?
++
++Scope 2 covers indirect greenhouse gas emissions from purchased electricity, steam, heating, and cooling. For commercial buildings, this primarily means the electricity consumed by the building's equipment and systems. The UAE law requires this to be measured using approved calculation methodologies, not estimated from utility bills alone.
++
++### Do I need a Building Management System (BMS) to comply?
++
++No. While a BMS can control certain building systems, it typically only monitors equipment it's directly connected to — which is often a fraction of total consumption. Non-invasive, equipment-level monitoring solutions can be deployed alongside or independent of a BMS, covering your entire building portfolio without requiring shutdowns or infrastructure changes.
++
++### How long does it take to set up equipment-level monitoring?
++
++Modern clamp-on monitoring solutions can be installed and producing live data within 24–48 hours. There's no need for building shutdowns, electrical work, or complex IT integration. The hardware mounts directly onto existing electrical panels and transmits data wirelessly to a cloud platform.
+diff --git a/context/blog/brand-voice.md b/context/blog/brand-voice.md
+new file mode 100644
+index 0000000..eb097b4
+--- /dev/null
++++ b/context/blog/brand-voice.md
+@@ -0,0 +1,51 @@
++# Amp Energy — Blog Brand Voice Guide
++
++## Voice & Tone
++- **Authoritative but accessible**: Write like a senior industry expert explaining things to a smart peer, not a professor lecturing students.
++- **Data-driven**: Always ground insights in numbers and specifics. Amp's key stats: 10–20% energy savings identified, <1 year payback, 24-hour deployment, 0.2% margin of error, 64% background load reduction (case study).
++- **Practical and action-oriented**: Every article should leave the reader with something concrete they can do or decide. Avoid purely theoretical content.
++- **Regionally aware**: Primary markets are UAE and KSA. Reference DEWA, UAE Federal Decree-Law No. 11, Vision 2050, Vision 2030, GCC building codes, local climate realities (extreme cooling loads).
++- **Confident, not salesy**: Amp is referenced naturally as a solution where relevant, but never in a hard-sell tone. The blog educates first. The CTA is always soft — "Book a Demo" or "Contact Us" at the end.
++
++## What We Never Do
++- Use empty buzzwords without backing them up ("revolutionary", "game-changing", "cutting-edge")
++- Make claims without data
++- Write generic content that could apply to any energy company anywhere
++- Ignore the regional context (this isn't a US or EU audience)
++- Write overly technical content that alienates non-engineers (our primary reader is a facilities manager, not a data scientist)
++
++## Content Structure
++Every blog post follows this structure:
++1. **Hook** (2–3 sentences): Lead with a pain point, stat, or timely event
++2. **Context / Problem** (150–250 words): Frame the industry challenge
++3. **Insight / Solution** (300–500 words): Educational content, practical guidance
++4. **Amp Connection** (50–100 words): Natural, non-salesy reference to Amp's relevance
++5. **Conclusion + CTA** (50–100 words): Summary takeaway + soft CTA
++6. **FAQ Section** (2–3 questions): Structured for AI Overview / featured snippet eligibility
++
++## SEO Requirements
++- Title: Contains primary keyword, under 60 characters, compelling
++- Meta description: 150–160 characters, includes keyword, drives clicks
++- H2/H3 hierarchy: Logical, keyword-aware headings
++- Internal links: Reference 1–2 other Amp blog posts or pages (product, contact) where natural
++- FAQ: Always include 2–3 structured FAQ items at the end
++
++## Target Article Length
++800–1,200 words (excluding FAQ section)
++
++## Personas We Write For
++1. **The Facility Champion**: FM managers who know energy is being wasted but can't prove it. Practical, evidence-based, risk-averse.
++2. **The Sustainability Strategist**: ESG/sustainability leaders who need auditable Scope 2 data. Strategic, compliance-oriented.
++3. **The Executive Sponsor**: C-suite who approve budgets. Care about ROI, risk, and competitive positioning.
++4. **The Procurement Gatekeeper**: Process-focused. Needs vendor credibility, references, specs.
++5. **The Channel Multiplier**: ESCOs, solar companies, FM companies who want to differentiate their offering.
++
++## Key Product Differentiators to Weave In Naturally
++- No BMS required — works on any building
++- Equipment-level granularity (not just building-level)
++- 24-hour deployment, zero downtime
++- Lowest cost per endpoint in market
++- Clamp-on sensors, no electrical work
++- AI-powered savings recommendations
++- Portfolio-wide multi-site visibility
++- Direct relevance to UAE Decree-Law No. 11 Scope 2 compliance
+diff --git a/context/blog/seo-keywords.md b/context/blog/seo-keywords.md
+new file mode 100644
+index 0000000..fe5a6b5
+--- /dev/null
++++ b/context/blog/seo-keywords.md
+@@ -0,0 +1,64 @@
++# Amp Blog — SEO Keyword Map
++
++## Target Keyword Clusters
++Each blog post targets ONE primary keyword and 2–3 supporting long-tail keywords.
++
++### Cluster 1: Building Monitoring
++- **Primary**: building energy monitoring system
++- **Supporting**: equipment level energy monitoring, circuit level monitoring, real-time energy data
++- **Intent**: Product research — buyers evaluating solutions
++- **Pillar**: technology
++
++### Cluster 2: No-BMS Solutions
++- **Primary**: energy management system without BMS
++- **Supporting**: energy monitoring without BMS, non-invasive energy monitoring, retrofit energy monitoring
++- **Intent**: Problem-aware — Amp's core differentiator
++- **Pillar**: technology
++
++### Cluster 3: UAE Energy Costs
++- **Primary**: reduce energy costs commercial buildings UAE
++- **Supporting**: commercial building energy waste Dubai, HVAC energy costs UAE, electricity costs Dubai commercial
++- **Intent**: Problem-aware — local market
++- **Pillar**: efficiency
++
++### Cluster 4: Energy Audits
++- **Primary**: building energy audit Dubai
++- **Supporting**: energy audit services UAE, commercial energy assessment, building energy assessment Dubai
++- **Intent**: Service search — local intent
++- **Pillar**: efficiency
++
++### Cluster 5: Climate Compliance
++- **Primary**: UAE climate law facility managers
++- **Supporting**: UAE Federal Decree-Law No. 11, Scope 2 compliance UAE, emissions reporting UAE buildings
++- **Intent**: Compliance-driven — timely, high intent
++- **Pillar**: compliance
++
++### Cluster 6: HVAC Waste
++- **Primary**: HVAC energy waste commercial buildings
++- **Supporting**: HVAC overnight consumption, HVAC energy optimization, chiller energy efficiency
++- **Intent**: Problem-aware — educational content opportunity
++- **Pillar**: efficiency
++
++### Cluster 7: Building Ratings
++- **Primary**: building energy rating A to F
++- **Supporting**: building efficiency rating, energy performance certificate UAE, building energy benchmarking
++- **Intent**: Educational — maps to Amp's rating feature
++- **Pillar**: thought-leadership
++
++### Cluster 8: Sustainability Reporting
++- **Primary**: ESG reporting commercial buildings
++- **Supporting**: sustainability data buildings, carbon reporting UAE, net zero buildings GCC
++- **Intent**: Strategic — compliance and positioning
++- **Pillar**: compliance
++
++### Cluster 9: IoT in Buildings
++- **Primary**: IoT energy monitoring buildings
++- **Supporting**: smart building sensors, connected building technology, intelligent building systems
++- **Intent**: Technology research
++- **Pillar**: technology
++
++### Cluster 10: Cost of Energy Waste
++- **Primary**: hidden energy costs commercial buildings
++- **Supporting**: energy waste cost calculator, unoccupied hours energy consumption, background load reduction
++- **Intent**: Problem-aware — quantifying the pain
++- **Pillar**: efficiency
+diff --git a/next.config.ts b/next.config.ts
+index b93d46e..72849b9 100644
+--- a/next.config.ts
++++ b/next.config.ts
+@@ -20,11 +20,6 @@ const nextConfig: NextConfig = {
+         destination: '/privacy',
+         permanent: true,
+       },
+-      {
+-        source: '/blog/uae-climate-law-takes-effect-this-month-what-facility-managers-and-escos-need-to-know',
+-        destination: '/',
+-        permanent: true,
+-      },
+     ];
+   },
+ };
+diff --git a/package-lock.json b/package-lock.json
+index 72ce87b..45caf14 100644
+--- a/package-lock.json
++++ b/package-lock.json
+@@ -16,9 +16,11 @@
+         "@radix-ui/react-tooltip": "^1.2.8",
+         "clsx": "^2.1.1",
+         "geist": "^1.5.1",
++        "gray-matter": "^4.0.3",
+         "next": "16.1.3",
+         "react": "19.2.3",
+         "react-dom": "19.2.3",
++        "reading-time": "^1.5.0",
+         "resend": "^6.8.0"
+       },
+       "devDependencies": {
+@@ -4246,6 +4248,19 @@
+         "url": "https://opencollective.com/eslint"
+       }
+     },
++    "node_modules/esprima": {
++      "version": "4.0.1",
++      "resolved": "https://registry.npmjs.org/esprima/-/esprima-4.0.1.tgz",
++      "integrity": "sha512-eGuFFw7Upda+g4p+QHvnW0RyTX/SVeJBDM/gCtMARO0cLuT2HcEKnTPvhjV6aGeqrCB/sbNop0Kszm0jsaWU4A==",
++      "license": "BSD-2-Clause",
++      "bin": {
++        "esparse": "bin/esparse.js",
++        "esvalidate": "bin/esvalidate.js"
++      },
++      "engines": {
++        "node": ">=4"
++      }
++    },
+     "node_modules/esquery": {
+       "version": "1.7.0",
+       "resolved": "https://registry.npmjs.org/esquery/-/esquery-1.7.0.tgz",
+@@ -4292,6 +4307,18 @@
+         "node": ">=0.10.0"
+       }
+     },
++    "node_modules/extend-shallow": {
++      "version": "2.0.1",
++      "resolved": "https://registry.npmjs.org/extend-shallow/-/extend-shallow-2.0.1.tgz",
++      "integrity": "sha512-zCnTtlxNoAiDc3gqY2aYAWFx7XWWiasuF2K8Me5WbN8otHKTUKBwjPtNpRs/rbUZm7KxWAaNj7P1a/p52GbVug==",
++      "license": "MIT",
++      "dependencies": {
++        "is-extendable": "^0.1.0"
++      },
++      "engines": {
++        "node": ">=0.10.0"
++      }
++    },
+     "node_modules/fast-deep-equal": {
+       "version": "3.1.3",
+       "resolved": "https://registry.npmjs.org/fast-deep-equal/-/fast-deep-equal-3.1.3.tgz",
+@@ -4651,6 +4678,43 @@
+       "dev": true,
+       "license": "ISC"
+     },
++    "node_modules/gray-matter": {
++      "version": "4.0.3",
++      "resolved": "https://registry.npmjs.org/gray-matter/-/gray-matter-4.0.3.tgz",
++      "integrity": "sha512-5v6yZd4JK3eMI3FqqCouswVqwugaA9r4dNZB1wwcmrD02QkV5H0y7XBQW8QwQqEaZY1pM9aqORSORhJRdNK44Q==",
++      "license": "MIT",
++      "dependencies": {
++        "js-yaml": "^3.13.1",
++        "kind-of": "^6.0.2",
++        "section-matter": "^1.0.0",
++        "strip-bom-string": "^1.0.0"
++      },
++      "engines": {
++        "node": ">=6.0"
++      }
++    },
++    "node_modules/gray-matter/node_modules/argparse": {
++      "version": "1.0.10",
++      "resolved": "https://registry.npmjs.org/argparse/-/argparse-1.0.10.tgz",
++      "integrity": "sha512-o5Roy6tNG4SL/FOkCAN6RzjiakZS25RLYFrcMttJqbdd8BWrnA+fGz57iN5Pb06pvBGvl5gQ0B48dJlslXvoTg==",
++      "license": "MIT",
++      "dependencies": {
++        "sprintf-js": "~1.0.2"
++      }
++    },
++    "node_modules/gray-matter/node_modules/js-yaml": {
++      "version": "3.14.2",
++      "resolved": "https://registry.npmjs.org/js-yaml/-/js-yaml-3.14.2.tgz",
++      "integrity": "sha512-PMSmkqxr106Xa156c2M265Z+FTrPl+oxd/rgOQy2tijQeK5TxQ43psO1ZCwhVOSdnn+RzkzlRz/eY4BgJBYVpg==",
++      "license": "MIT",
++      "dependencies": {
++        "argparse": "^1.0.7",
++        "esprima": "^4.0.0"
++      },
++      "bin": {
++        "js-yaml": "bin/js-yaml.js"
++      }
++    },
+     "node_modules/has-bigints": {
+       "version": "1.1.0",
+       "resolved": "https://registry.npmjs.org/has-bigints/-/has-bigints-1.1.0.tgz",
+@@ -4972,6 +5036,15 @@
+         "url": "https://github.com/sponsors/ljharb"
+       }
+     },
++    "node_modules/is-extendable": {
++      "version": "0.1.1",
++      "resolved": "https://registry.npmjs.org/is-extendable/-/is-extendable-0.1.1.tgz",
++      "integrity": "sha512-5BMULNob1vgFX6EjQw5izWDxrecWK9AM72rugNr0TFldMOi0fj6Jk+zeKIt0xGj4cEfQIJth4w3OKWOJ4f+AFw==",
++      "license": "MIT",
++      "engines": {
++        "node": ">=0.10.0"
++      }
++    },
+     "node_modules/is-extglob": {
+       "version": "2.1.1",
+       "resolved": "https://registry.npmjs.org/is-extglob/-/is-extglob-2.1.1.tgz",
+@@ -5364,6 +5437,15 @@
+         "json-buffer": "3.0.1"
+       }
+     },
++    "node_modules/kind-of": {
++      "version": "6.0.3",
++      "resolved": "https://registry.npmjs.org/kind-of/-/kind-of-6.0.3.tgz",
++      "integrity": "sha512-dcS1ul+9tmeD95T+x28/ehLgd9mENa3LsvDTtzm3vyBEO7RPptvAD+t44WVXaUjTBRcrpFeFlC8WCruUR456hw==",
++      "license": "MIT",
++      "engines": {
++        "node": ">=0.10.0"
++      }
++    },
+     "node_modules/language-subtag-registry": {
+       "version": "0.3.23",
+       "resolved": "https://registry.npmjs.org/language-subtag-registry/-/language-subtag-registry-0.3.23.tgz",
+@@ -6347,6 +6429,12 @@
+         }
+       }
+     },
++    "node_modules/reading-time": {
++      "version": "1.5.0",
++      "resolved": "https://registry.npmjs.org/reading-time/-/reading-time-1.5.0.tgz",
++      "integrity": "sha512-onYyVhBNr4CmAxFsKS7bz+uTLRakypIe4R+5A824vBSkQy/hB3fZepoVEf8OVAxzLvK+H/jm9TzpI3ETSm64Kg==",
++      "license": "MIT"
++    },
+     "node_modules/reflect.getprototypeof": {
+       "version": "1.0.10",
+       "resolved": "https://registry.npmjs.org/reflect.getprototypeof/-/reflect.getprototypeof-1.0.10.tgz",
+@@ -6548,6 +6636,19 @@
+       "integrity": "sha512-eNv+WrVbKu1f3vbYJT/xtiF5syA5HPIMtf9IgY/nKg0sWqzAUEvqY/xm7OcZc/qafLx/iO9FgOmeSAp4v5ti/Q==",
+       "license": "MIT"
+     },
++    "node_modules/section-matter": {
++      "version": "1.0.0",
++      "resolved": "https://registry.npmjs.org/section-matter/-/section-matter-1.0.0.tgz",
++      "integrity": "sha512-vfD3pmTzGpufjScBh50YHKzEu2lxBWhVEHsNGoEXmCmn2hKGfeNLYMzCJpe8cD7gqX7TJluOVpBkAequ6dgMmA==",
++      "license": "MIT",
++      "dependencies": {
++        "extend-shallow": "^2.0.1",
++        "kind-of": "^6.0.0"
++      },
++      "engines": {
++        "node": ">=4"
++      }
++    },
+     "node_modules/semver": {
+       "version": "6.3.1",
+       "resolved": "https://registry.npmjs.org/semver/-/semver-6.3.1.tgz",
+@@ -6773,6 +6874,12 @@
+         "node": ">=0.10.0"
+       }
+     },
++    "node_modules/sprintf-js": {
++      "version": "1.0.3",
++      "resolved": "https://registry.npmjs.org/sprintf-js/-/sprintf-js-1.0.3.tgz",
++      "integrity": "sha512-D9cPgkvLlV3t3IzL0D0YLvGA9Ahk4PcvVwUbN0dSGr1aP0Nrt4AEnTUbuGvquEC0mA64Gqt1fzirlRs5ibXx8g==",
++      "license": "BSD-3-Clause"
++    },
+     "node_modules/stable-hash": {
+       "version": "0.0.5",
+       "resolved": "https://registry.npmjs.org/stable-hash/-/stable-hash-0.0.5.tgz",
+@@ -6927,6 +7034,15 @@
+         "node": ">=4"
+       }
+     },
++    "node_modules/strip-bom-string": {
++      "version": "1.0.0",
++      "resolved": "https://registry.npmjs.org/strip-bom-string/-/strip-bom-string-1.0.0.tgz",
++      "integrity": "sha512-uCC2VHvQRYu+lMh4My/sFNmF2klFymLX1wHJeXnbEJERpV/ZsVuonzerjfrGpIGF7LBVa1O7i9kjiWvJiFck8g==",
++      "license": "MIT",
++      "engines": {
++        "node": ">=0.10.0"
++      }
++    },
+     "node_modules/strip-json-comments": {
+       "version": "3.1.1",
+       "resolved": "https://registry.npmjs.org/strip-json-comments/-/strip-json-comments-3.1.1.tgz",
+diff --git a/package.json b/package.json
+index f697941..80edab3 100644
+--- a/package.json
++++ b/package.json
+@@ -17,9 +17,11 @@
+     "@radix-ui/react-tooltip": "^1.2.8",
+     "clsx": "^2.1.1",
+     "geist": "^1.5.1",
++    "gray-matter": "^4.0.3",
+     "next": "16.1.3",
+     "react": "19.2.3",
+     "react-dom": "19.2.3",
++    "reading-time": "^1.5.0",
+     "resend": "^6.8.0"
+   },
+   "devDependencies": {
+diff --git a/src/app/api/blog/generate-post/route.ts b/src/app/api/blog/generate-post/route.ts
+new file mode 100644
+index 0000000..6127701
+--- /dev/null
++++ b/src/app/api/blog/generate-post/route.ts
+@@ -0,0 +1,80 @@
++import { NextResponse } from "next/server";
++import { generateBlogPost } from "@/lib/pipeline/generate";
++import {
++  postMessage,
++  formatDraftPreview,
++  type DraftPreview,
++} from "@/lib/pipeline/slack";
++import { generateSlug } from "@/lib/pipeline/publish";
++import readingTime from "reading-time";
++
++const PIPELINE_SECRET = process.env.PIPELINE_SECRET;
++
++export async function POST(request: Request) {
++  try {
++    const authHeader = request.headers.get("authorization");
++    if (PIPELINE_SECRET && authHeader !== `Bearer ${PIPELINE_SECRET}`) {
++      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
++    }
++
++    const body = await request.json();
++    const { title, keyword, persona, pillar, brief, publishDay } = body;
++
++    if (!title || !keyword || !persona || !pillar || !brief) {
++      return NextResponse.json(
++        { error: "Missing required fields: title, keyword, persona, pillar, brief" },
++        { status: 400 }
++      );
++    }
++
++    // Generate the full blog post
++    const result = await generateBlogPost(title, keyword, persona, pillar, brief);
++
++    const slug = generateSlug(title);
++    const stats = readingTime(result.content);
++    const wordCount = result.content.split(/\s+/).length;
++
++    // Prepare draft preview for Slack
++    const draft: DraftPreview = {
++      title,
++      description: result.description,
++      keyword,
++      readingTime: stats.text,
++      wordCount,
++      contentPreview: result.content.slice(0, 500).replace(/\n/g, " ") + "...",
++      publishDay: publishDay || "Next scheduled day",
++      slug,
++      fullContent: result.content,
++    };
++
++    // Post to Slack for approval
++    const blocks = formatDraftPreview(draft);
++    const slackResponse = await postMessage(
++      `📄 Draft ready for review: "${title}"`,
++      blocks
++    );
++
++    return NextResponse.json({
++      success: true,
++      slug,
++      slackTs: slackResponse.ts,
++      draft: {
++        title,
++        description: result.description,
++        keywords: result.keywords,
++        content: result.content,
++        readingTime: stats.text,
++        wordCount,
++      },
++    });
++  } catch (error) {
++    console.error("Post generation error:", error);
++    return NextResponse.json(
++      {
++        error: "Failed to generate blog post",
++        details: error instanceof Error ? error.message : String(error),
++      },
++      { status: 500 }
++    );
++  }
++}
+diff --git a/src/app/api/blog/generate-topics/route.ts b/src/app/api/blog/generate-topics/route.ts
+new file mode 100644
+index 0000000..368727b
+--- /dev/null
++++ b/src/app/api/blog/generate-topics/route.ts
+@@ -0,0 +1,59 @@
++import { NextResponse } from "next/server";
++import { generateTopics } from "@/lib/pipeline/generate";
++import {
++  postMessage,
++  formatTopicProposal,
++  type TopicProposal,
++} from "@/lib/pipeline/slack";
++
++// Protect with a simple secret to prevent unauthorized triggers
++const PIPELINE_SECRET = process.env.PIPELINE_SECRET;
++
++export async function POST(request: Request) {
++  try {
++    // Auth check
++    const authHeader = request.headers.get("authorization");
++    if (PIPELINE_SECRET && authHeader !== `Bearer ${PIPELINE_SECRET}`) {
++      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
++    }
++
++    // Generate topics using Claude + web search
++    const rawTopics = await generateTopics();
++
++    let topics: TopicProposal[];
++    try {
++      topics = JSON.parse(rawTopics);
++    } catch {
++      // Try to extract JSON array
++      const match = rawTopics.match(/\[[\s\S]*\]/);
++      if (match) {
++        topics = JSON.parse(match[0]);
++      } else {
++        throw new Error("Failed to parse topics response");
++      }
++    }
++
++    // Post to Slack
++    const blocks = formatTopicProposal(topics);
++    const slackResponse = await postMessage(
++      `📝 ${topics.length} blog topic proposals ready for review`,
++      blocks
++    );
++
++    return NextResponse.json({
++      success: true,
++      topicCount: topics.length,
++      slackTs: slackResponse.ts,
++      topics,
++    });
++  } catch (error) {
++    console.error("Topic generation error:", error);
++    return NextResponse.json(
++      {
++        error: "Failed to generate topics",
++        details: error instanceof Error ? error.message : String(error),
++      },
++      { status: 500 }
++    );
++  }
++}
+diff --git a/src/app/api/blog/publish/route.ts b/src/app/api/blog/publish/route.ts
+new file mode 100644
+index 0000000..7b009ed
+--- /dev/null
++++ b/src/app/api/blog/publish/route.ts
+@@ -0,0 +1,64 @@
++import { NextResponse } from "next/server";
++import { createMdxFile } from "@/lib/pipeline/publish";
++import { postMessage } from "@/lib/pipeline/slack";
++
++const PIPELINE_SECRET = process.env.PIPELINE_SECRET;
++
++export async function POST(request: Request) {
++  try {
++    const authHeader = request.headers.get("authorization");
++    if (PIPELINE_SECRET && authHeader !== `Bearer ${PIPELINE_SECRET}`) {
++      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
++    }
++
++    const body = await request.json();
++    const { title, description, category, keywords, content, slug } = body;
++
++    if (!title || !description || !content) {
++      return NextResponse.json(
++        { error: "Missing required fields" },
++        { status: 400 }
++      );
++    }
++
++    // Create the MDX file in content/blog/
++    const finalSlug = createMdxFile({
++      slug,
++      title,
++      description,
++      date: new Date().toISOString().split("T")[0],
++      author: "Amp Team",
++      category: category || "efficiency",
++      keywords: keywords || [],
++      content,
++    });
++
++    const liveUrl = `https://www.ampenergy.ae/blog/${finalSlug}`;
++
++    // Post confirmation to Slack
++    await postMessage(`✅ Blog post published!`, [
++      {
++        type: "section",
++        text: {
++          type: "mrkdwn",
++          text: `*✅ Published:* <${liveUrl}|${title}>\n\nThe post is now live. Vercel will deploy automatically once the changes are committed.`,
++        },
++      },
++    ]);
++
++    return NextResponse.json({
++      success: true,
++      slug: finalSlug,
++      url: liveUrl,
++    });
++  } catch (error) {
++    console.error("Publish error:", error);
++    return NextResponse.json(
++      {
++        error: "Failed to publish",
++        details: error instanceof Error ? error.message : String(error),
++      },
++      { status: 500 }
++    );
++  }
++}
+diff --git a/src/app/blog/[slug]/page.tsx b/src/app/blog/[slug]/page.tsx
+new file mode 100644
+index 0000000..6065a8a
+--- /dev/null
++++ b/src/app/blog/[slug]/page.tsx
+@@ -0,0 +1,255 @@
++import { Metadata } from "next";
++import Link from "next/link";
++import { notFound } from "next/navigation";
++import { getPostBySlug, getAllSlugs, getCategoryLabel, getAllPosts } from "@/lib/blog";
++import { MarkdownRenderer } from "@/components/blog/MarkdownRenderer";
++
++interface PageProps {
++  params: Promise<{ slug: string }>;
++}
++
++export async function generateStaticParams() {
++  return getAllSlugs().map((slug) => ({ slug }));
++}
++
++export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
++  const { slug } = await params;
++  const post = getPostBySlug(slug);
++  if (!post) return {};
++
++  return {
++    title: post.title,
++    description: post.description,
++    keywords: post.keywords,
++    alternates: { canonical: `/blog/${slug}` },
++    openGraph: {
++      title: post.title,
++      description: post.description,
++      url: `https://www.ampenergy.ae/blog/${slug}`,
++      type: "article",
++      publishedTime: post.date,
++      authors: [post.author],
++      tags: post.keywords,
++    },
++    twitter: {
++      card: "summary_large_image",
++      title: post.title,
++      description: post.description,
++    },
++  };
++}
++
++const CATEGORY_COLORS: Record<string, string> = {
++  compliance: "bg-amber-500/15 text-amber-400 border-amber-500/20",
++  efficiency: "bg-emerald-500/15 text-emerald-400 border-emerald-500/20",
++  technology: "bg-sky-500/15 text-sky-400 border-sky-500/20",
++  "thought-leadership": "bg-violet-500/15 text-violet-400 border-violet-500/20",
++};
++
++function formatDate(dateStr: string): string {
++  return new Date(dateStr).toLocaleDateString("en-US", {
++    year: "numeric",
++    month: "long",
++    day: "numeric",
++  });
++}
++
++export default async function BlogPostPage({ params }: PageProps) {
++  const { slug } = await params;
++  const post = getPostBySlug(slug);
++  if (!post) notFound();
++
++  const allPosts = getAllPosts();
++  const relatedPosts = allPosts
++    .filter((p) => p.slug !== slug)
++    .filter((p) => p.category === post.category || p.keywords.some((k) => post.keywords.includes(k)))
++    .slice(0, 2);
++
++  const colorClass =
++    CATEGORY_COLORS[post.category] ||
++    "bg-[var(--color-primary)]/15 text-[var(--color-primary)] border-[var(--color-primary)]/20";
++
++  const jsonLd = {
++    "@context": "https://schema.org",
++    "@type": "Article",
++    headline: post.title,
++    description: post.description,
++    datePublished: post.date,
++    author: {
++      "@type": "Organization",
++      name: "Amp Energy",
++      url: "https://www.ampenergy.ae",
++    },
++    publisher: {
++      "@type": "Organization",
++      name: "Amp Energy",
++      url: "https://www.ampenergy.ae",
++      logo: {
++        "@type": "ImageObject",
++        url: "https://www.ampenergy.ae/images/amp-logo.svg",
++      },
++    },
++    mainEntityOfPage: {
++      "@type": "WebPage",
++      "@id": `https://www.ampenergy.ae/blog/${slug}`,
++    },
++  };
++
++  return (
++    <div className="min-h-screen bg-[var(--section-dark-bg)]">
++      {/* JSON-LD */}
++      <script
++        type="application/ld+json"
++        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
++      />
++
++      {/* Article Header */}
++      <header className="relative overflow-hidden border-b border-[var(--section-dark-border)] pb-12 pt-24 sm:pb-16 sm:pt-32">
++        <div className="pointer-events-none absolute left-1/2 top-0 h-[400px] w-[600px] -translate-x-1/2 -translate-y-1/2 rounded-full bg-[var(--glow-teal)] blur-3xl" />
++
++        <div className="relative mx-auto max-w-3xl px-4 sm:px-6 lg:px-8">
++          {/* Breadcrumb */}
++          <nav className="mb-6 flex items-center gap-2 text-sm text-[var(--section-dark-text-muted)]">
++            <Link
++              href="/blog"
++              className="transition-colors hover:text-[var(--color-primary)]"
++            >
++              Blog
++            </Link>
++            <svg className="h-4 w-4 opacity-40" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
++              <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
++            </svg>
++            <span className="truncate">{post.title}</span>
++          </nav>
++
++          {/* Meta */}
++          <div className="mb-5 flex flex-wrap items-center gap-3">
++            <span
++              className={`inline-flex items-center rounded-full border px-3 py-1 text-xs font-medium ${colorClass}`}
++            >
++              {getCategoryLabel(post.category)}
++            </span>
++            <span className="text-sm text-[var(--section-dark-text-muted)]">
++              {post.readingTime}
++            </span>
++            <span className="text-[var(--section-dark-text-muted)]/40">·</span>
++            <time
++              dateTime={post.date}
++              className="text-sm text-[var(--section-dark-text-muted)]"
++            >
++              {formatDate(post.date)}
++            </time>
++          </div>
++
++          {/* Title */}
++          <h1 className="mb-4 text-3xl font-bold leading-tight tracking-tight text-[var(--section-dark-heading)] sm:text-4xl lg:text-[2.75rem]">
++            {post.title}
++          </h1>
++
++          {/* Description */}
++          <p className="text-lg leading-relaxed text-[var(--section-dark-text-muted)]">
++            {post.description}
++          </p>
++
++          {/* Author */}
++          <div className="mt-6 flex items-center gap-3">
++            <div className="flex h-10 w-10 items-center justify-center rounded-full bg-[var(--color-primary)]/15 text-[var(--color-primary)]">
++              <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
++                <path strokeLinecap="round" strokeLinejoin="round" d="M2.25 21h19.5m-18-18v18m10.5-18v18m6-13.5V21M6.75 6.75h.75m-.75 3h.75m-.75 3h.75m3-6h.75m-.75 3h.75m-.75 3h.75M6.75 21v-3.375c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125V21M3 3h12m-.75 4.5H21m-3.75 0h.008v.008h-.008v-.008zm0 3h.008v.008h-.008v-.008zm0 3h.008v.008h-.008v-.008z" />
++              </svg>
++            </div>
++            <div>
++              <p className="text-sm font-medium text-[var(--section-dark-heading)]">
++                {post.author}
++              </p>
++              <p className="text-xs text-[var(--section-dark-text-muted)]">
++                Energy Intelligence Platform
++              </p>
++            </div>
++          </div>
++        </div>
++      </header>
++
++      {/* Article Body */}
++      <article className="mx-auto max-w-3xl px-4 py-12 sm:px-6 sm:py-16 lg:px-8">
++        <MarkdownRenderer content={post.content} />
++      </article>
++
++      {/* Keywords / Tags */}
++      {post.keywords.length > 0 && (
++        <div className="mx-auto max-w-3xl border-t border-[var(--section-dark-border)] px-4 py-8 sm:px-6 lg:px-8">
++          <div className="flex flex-wrap gap-2">
++            {post.keywords.map((keyword) => (
++              <span
++                key={keyword}
++                className="rounded-full border border-[var(--section-dark-border)] bg-[var(--section-dark-bg-subtle)] px-3 py-1 text-xs text-[var(--section-dark-text-muted)]"
++              >
++                {keyword}
++              </span>
++            ))}
++          </div>
++        </div>
++      )}
++
++      {/* Related Posts */}
++      {relatedPosts.length > 0 && (
++        <section className="border-t border-[var(--section-dark-border)]">
++          <div className="mx-auto max-w-3xl px-4 py-12 sm:px-6 sm:py-16 lg:px-8">
++            <h2 className="mb-6 text-xl font-semibold text-[var(--section-dark-heading)]">
++              Related Articles
++            </h2>
++            <div className="grid gap-4 sm:grid-cols-2">
++              {relatedPosts.map((rp) => (
++                <Link
++                  key={rp.slug}
++                  href={`/blog/${rp.slug}`}
++                  className="group rounded-xl border border-[var(--section-dark-border)] bg-[#0D1B19]/60 p-5 transition-all duration-200 hover:border-[var(--border-accent)]"
++                >
++                  <p className="mb-1 text-xs text-[var(--section-dark-text-muted)]">
++                    {getCategoryLabel(rp.category)}
++                  </p>
++                  <h3 className="text-sm font-semibold leading-snug text-[var(--section-dark-heading)] transition-colors group-hover:text-[var(--color-primary)]">
++                    {rp.title}
++                  </h3>
++                </Link>
++              ))}
++            </div>
++          </div>
++        </section>
++      )}
++
++      {/* CTA */}
++      <section className="border-t border-[var(--section-dark-border)]">
++        <div className="mx-auto max-w-3xl px-4 py-12 sm:px-6 sm:py-16 lg:px-8">
++          <div className="relative overflow-hidden rounded-2xl border border-[var(--border-accent)] bg-gradient-to-br from-[var(--section-dark-bg-accent)] to-[var(--section-dark-bg-subtle)] p-8 text-center sm:p-12">
++            <div className="pointer-events-none absolute -right-16 -top-16 h-48 w-48 rounded-full bg-[var(--glow-teal)] blur-3xl" />
++            <div className="relative">
++              <h2 className="mb-3 text-2xl font-bold text-[var(--section-dark-heading)]">
++                See your building&apos;s energy data
++              </h2>
++              <p className="mb-6 text-[var(--section-dark-text-muted)]">
++                Equipment-level visibility in 24 hours. No BMS required.
++              </p>
++              <div className="flex flex-col items-center gap-3 sm:flex-row sm:justify-center">
++                <a
++                  href="https://calendly.com/tariq-amp/intro-call"
++                  target="_blank"
++                  rel="noopener noreferrer"
++                  className="btn-lift inline-flex h-11 items-center justify-center rounded-full bg-[var(--color-btn-primary)] px-7 text-sm font-medium text-white transition-colors hover:bg-[var(--color-btn-primary-hover)]"
++                >
++                  Book a Demo
++                </a>
++                <Link
++                  href="/contact"
++                  className="inline-flex h-11 items-center justify-center rounded-full border border-[var(--section-dark-border)] px-7 text-sm font-medium text-[var(--section-dark-text)] transition-colors hover:border-[var(--border-accent)] hover:text-[var(--color-primary)]"
++                >
++                  Contact Sales
++                </Link>
++              </div>
++            </div>
++          </div>
++        </div>
++      </section>
++    </div>
++  );
++}
+diff --git a/src/app/blog/page.tsx b/src/app/blog/page.tsx
+new file mode 100644
+index 0000000..97995ff
+--- /dev/null
++++ b/src/app/blog/page.tsx
+@@ -0,0 +1,198 @@
++import { Metadata } from "next";
++import Link from "next/link";
++import { getAllPosts, getCategoryLabel, type BlogPostMeta } from "@/lib/blog";
++
++export const metadata: Metadata = {
++  title: "Blog | Energy Intelligence Insights",
++  description:
++    "Expert insights on building energy monitoring, UAE climate compliance, HVAC optimization, and sustainability for commercial buildings in the GCC.",
++  alternates: { canonical: "/blog" },
++  openGraph: {
++    title: "Blog | Amp Energy",
++    description:
++      "Expert insights on building energy monitoring, UAE climate compliance, and sustainability.",
++    url: "https://www.ampenergy.ae/blog",
++  },
++};
++
++const CATEGORY_COLORS: Record<string, string> = {
++  compliance: "bg-amber-500/15 text-amber-400 border-amber-500/20",
++  efficiency: "bg-emerald-500/15 text-emerald-400 border-emerald-500/20",
++  technology: "bg-sky-500/15 text-sky-400 border-sky-500/20",
++  "thought-leadership": "bg-violet-500/15 text-violet-400 border-violet-500/20",
++};
++
++function formatDate(dateStr: string): string {
++  return new Date(dateStr).toLocaleDateString("en-US", {
++    year: "numeric",
++    month: "long",
++    day: "numeric",
++  });
++}
++
++function BlogCard({ post }: { post: BlogPostMeta }) {
++  const colorClass =
++    CATEGORY_COLORS[post.category] ||
++    "bg-[var(--color-primary)]/15 text-[var(--color-primary)] border-[var(--color-primary)]/20";
++
++  return (
++    <Link href={`/blog/${post.slug}`} className="group block">
++      <article className="relative h-full rounded-2xl border border-[var(--section-dark-border)] bg-[#0D1B19]/60 p-6 backdrop-blur-sm transition-all duration-300 hover:border-[var(--border-accent)] hover:bg-[#0D1B19]/80 hover:shadow-[0_0_40px_rgba(29,185,160,0.06)]">
++        {/* Subtle corner glow on hover */}
++        <div className="absolute -right-px -top-px h-20 w-20 rounded-tr-2xl bg-gradient-to-bl from-[var(--color-primary)]/[0.08] to-transparent opacity-0 transition-opacity duration-300 group-hover:opacity-100" />
++
++        {/* Category + Reading Time */}
++        <div className="mb-4 flex items-center gap-3">
++          <span
++            className={`inline-flex items-center rounded-full border px-3 py-1 text-xs font-medium ${colorClass}`}
++          >
++            {getCategoryLabel(post.category)}
++          </span>
++          <span className="text-xs text-[var(--section-dark-text-muted)]">
++            {post.readingTime}
++          </span>
++        </div>
++
++        {/* Title */}
++        <h2 className="mb-3 text-lg font-semibold leading-snug text-[var(--section-dark-heading)] transition-colors duration-200 group-hover:text-[var(--color-primary)]">
++          {post.title}
++        </h2>
++
++        {/* Excerpt */}
++        <p className="mb-5 line-clamp-3 text-sm leading-relaxed text-[var(--section-dark-text-muted)]">
++          {post.description}
++        </p>
++
++        {/* Date + Read more */}
++        <div className="flex items-center justify-between">
++          <time
++            dateTime={post.date}
++            className="text-xs text-[var(--section-dark-text-muted)]/70"
++          >
++            {formatDate(post.date)}
++          </time>
++          <span className="inline-flex items-center gap-1 text-xs font-medium text-[var(--color-primary)] opacity-0 transition-all duration-200 group-hover:opacity-100 group-hover:translate-x-0 -translate-x-2">
++            Read
++            <svg
++              className="h-3.5 w-3.5"
++              fill="none"
++              viewBox="0 0 24 24"
++              stroke="currentColor"
++              strokeWidth={2}
++            >
++              <path
++                strokeLinecap="round"
++                strokeLinejoin="round"
++                d="M13.5 4.5L21 12m0 0l-7.5 7.5M21 12H3"
++              />
++            </svg>
++          </span>
++        </div>
++      </article>
++    </Link>
++  );
++}
++
++export default function BlogPage() {
++  const posts = getAllPosts();
++
++  return (
++    <div className="min-h-screen bg-[var(--section-dark-bg)]">
++      {/* Hero */}
++      <section className="relative overflow-hidden border-b border-[var(--section-dark-border)] pb-16 pt-24 sm:pb-20 sm:pt-32">
++        {/* Background grid pattern */}
++        <div
++          className="pointer-events-none absolute inset-0 opacity-[0.03]"
++          style={{
++            backgroundImage: `linear-gradient(var(--color-primary) 1px, transparent 1px), linear-gradient(90deg, var(--color-primary) 1px, transparent 1px)`,
++            backgroundSize: "60px 60px",
++          }}
++        />
++        {/* Radial glow */}
++        <div className="pointer-events-none absolute left-1/2 top-0 h-[500px] w-[800px] -translate-x-1/2 -translate-y-1/2 rounded-full bg-[var(--glow-teal)] blur-3xl" />
++
++        <div className="relative mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
++          <div className="max-w-2xl">
++            <div className="mb-4 inline-flex items-center gap-2 rounded-full border border-[var(--border-accent)] bg-[var(--glow-teal)] px-4 py-1.5">
++              <div className="h-1.5 w-1.5 rounded-full bg-[var(--color-primary)] animate-pulse" />
++              <span className="text-xs font-medium tracking-wide text-[var(--color-primary)]">
++                ENERGY INTELLIGENCE INSIGHTS
++              </span>
++            </div>
++            <h1 className="mb-4 text-4xl font-bold tracking-tight text-[var(--section-dark-heading)] sm:text-5xl">
++              The Amp Blog
++            </h1>
++            <p className="text-lg leading-relaxed text-[var(--section-dark-text-muted)]">
++              Expert insights on building energy monitoring, UAE climate
++              compliance, and the future of energy intelligence for commercial
++              buildings.
++            </p>
++          </div>
++        </div>
++      </section>
++
++      {/* Posts Grid */}
++      <section className="mx-auto max-w-7xl px-4 py-16 sm:px-6 sm:py-20 lg:px-8">
++        {posts.length === 0 ? (
++          <div className="flex flex-col items-center justify-center py-20 text-center">
++            <div className="mb-6 flex h-16 w-16 items-center justify-center rounded-2xl border border-[var(--section-dark-border)] bg-[var(--section-dark-bg-subtle)]">
++              <svg
++                className="h-8 w-8 text-[var(--color-primary)]"
++                fill="none"
++                viewBox="0 0 24 24"
++                stroke="currentColor"
++                strokeWidth={1.5}
++              >
++                <path
++                  strokeLinecap="round"
++                  strokeLinejoin="round"
++                  d="M12 6.042A8.967 8.967 0 006 3.75c-1.052 0-2.062.18-3 .512v14.25A8.987 8.987 0 016 18c2.305 0 4.408.867 6 2.292m0-14.25a8.966 8.966 0 016-2.292c1.052 0 2.062.18 3 .512v14.25A8.987 8.987 0 0018 18a8.967 8.967 0 00-6 2.292m0-14.25v14.25"
++                />
++              </svg>
++            </div>
++            <h2 className="mb-2 text-xl font-semibold text-[var(--section-dark-heading)]">
++              Coming Soon
++            </h2>
++            <p className="max-w-md text-[var(--section-dark-text-muted)]">
++              We&apos;re preparing expert insights on building energy intelligence,
++              compliance, and sustainability. Check back soon.
++            </p>
++          </div>
++        ) : (
++          <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
++            {posts.map((post) => (
++              <BlogCard key={post.slug} post={post} />
++            ))}
++          </div>
++        )}
++      </section>
++
++      {/* CTA Banner */}
++      <section className="border-t border-[var(--section-dark-border)]">
++        <div className="mx-auto max-w-7xl px-4 py-16 sm:px-6 lg:px-8">
++          <div className="relative overflow-hidden rounded-2xl border border-[var(--border-accent)] bg-gradient-to-br from-[var(--section-dark-bg-accent)] to-[var(--section-dark-bg-subtle)] p-8 sm:p-12">
++            <div className="pointer-events-none absolute -right-20 -top-20 h-60 w-60 rounded-full bg-[var(--glow-teal)] blur-3xl" />
++            <div className="relative flex flex-col items-start gap-6 sm:flex-row sm:items-center sm:justify-between">
++              <div>
++                <h2 className="mb-2 text-2xl font-bold text-[var(--section-dark-heading)]">
++                  Ready to see your building&apos;s data?
++                </h2>
++                <p className="text-[var(--section-dark-text-muted)]">
++                  Book a demo and get equipment-level visibility in 24 hours.
++                </p>
++              </div>
++              <a
++                href="https://calendly.com/tariq-amp/intro-call"
++                target="_blank"
++                rel="noopener noreferrer"
++                className="btn-lift inline-flex h-11 shrink-0 items-center justify-center rounded-full bg-[var(--color-btn-primary)] px-7 text-sm font-medium text-white transition-colors hover:bg-[var(--color-btn-primary-hover)]"
++              >
++                Book a Demo
++              </a>
++            </div>
++          </div>
++        </div>
++      </section>
++    </div>
++  );
++}
+diff --git a/src/app/globals.css b/src/app/globals.css
+index 0efdbc9..39c3f2e 100644
+--- a/src/app/globals.css
++++ b/src/app/globals.css
+@@ -357,6 +357,133 @@ h1 {
+   min-width: 0;
+ }
+ 
++/* ===================
++   BLOG CONTENT TYPOGRAPHY
++   Dark theme, readable, futuristic
++   =================== */
++
++.blog-content {
++  font-size: 1.0625rem;
++  line-height: 1.75;
++  color: var(--section-dark-text);
++}
++
++.blog-content .blog-p {
++  margin-bottom: 1.25rem;
++}
++
++.blog-content .blog-h2 {
++  font-family: var(--font-display), 'Space Grotesk', system-ui, sans-serif;
++  font-size: var(--text-2xl);
++  font-weight: 700;
++  color: var(--section-dark-heading);
++  margin-top: 2.5rem;
++  margin-bottom: 1rem;
++  letter-spacing: var(--tracking-tight);
++  line-height: var(--leading-snug);
++}
++
++.blog-content .blog-h3 {
++  font-family: var(--font-display), 'Space Grotesk', system-ui, sans-serif;
++  font-size: var(--text-xl);
++  font-weight: 600;
++  color: var(--section-dark-heading);
++  margin-top: 2rem;
++  margin-bottom: 0.75rem;
++  letter-spacing: var(--tracking-tight);
++}
++
++.blog-content .blog-h4 {
++  font-family: var(--font-display), 'Space Grotesk', system-ui, sans-serif;
++  font-size: var(--text-lg);
++  font-weight: 600;
++  color: var(--section-dark-heading);
++  margin-top: 1.5rem;
++  margin-bottom: 0.5rem;
++}
++
++.blog-content .blog-link {
++  color: var(--color-primary);
++  text-decoration: underline;
++  text-underline-offset: 3px;
++  transition: color 150ms;
++}
++
++.blog-content .blog-link:hover {
++  color: var(--color-primary-light);
++}
++
++.blog-content .blog-ul,
++.blog-content .blog-ol {
++  margin-bottom: 1.25rem;
++  padding-left: 1.5rem;
++}
++
++.blog-content .blog-ul {
++  list-style-type: disc;
++}
++
++.blog-content .blog-ol {
++  list-style-type: decimal;
++}
++
++.blog-content .blog-ul li,
++.blog-content .blog-ol li {
++  margin-bottom: 0.5rem;
++  padding-left: 0.25rem;
++}
++
++.blog-content .blog-ul li::marker {
++  color: var(--color-primary);
++}
++
++.blog-content .blog-blockquote {
++  border-left: 3px solid var(--color-primary);
++  padding: 1rem 1.5rem;
++  margin: 1.5rem 0;
++  background: rgba(29, 185, 160, 0.05);
++  border-radius: 0 0.5rem 0.5rem 0;
++  color: var(--section-dark-text-muted);
++  font-style: italic;
++}
++
++.blog-content .blog-code-block {
++  background: #0A1210;
++  border: 1px solid var(--section-dark-border);
++  border-radius: 0.75rem;
++  padding: 1.25rem;
++  margin: 1.5rem 0;
++  overflow-x: auto;
++  font-family: var(--font-mono);
++  font-size: 0.875rem;
++  line-height: 1.6;
++}
++
++.blog-content .blog-inline-code {
++  background: rgba(29, 185, 160, 0.1);
++  border: 1px solid rgba(29, 185, 160, 0.15);
++  border-radius: 0.25rem;
++  padding: 0.125rem 0.375rem;
++  font-family: var(--font-mono);
++  font-size: 0.875em;
++  color: var(--color-primary);
++}
++
++.blog-content .blog-hr {
++  border: none;
++  border-top: 1px solid var(--section-dark-border);
++  margin: 2.5rem 0;
++}
++
++.blog-content strong {
++  font-weight: 600;
++  color: var(--section-dark-heading);
++}
++
++.blog-content em {
++  font-style: italic;
++}
++
+ /* RTL-safe logical properties */
+ .ms-auto { margin-inline-start: auto; }
+ .me-auto { margin-inline-end: auto; }
+diff --git a/src/app/sitemap.ts b/src/app/sitemap.ts
+index 971ca3a..c89ace3 100644
+--- a/src/app/sitemap.ts
++++ b/src/app/sitemap.ts
+@@ -1,13 +1,8 @@
+ import { MetadataRoute } from 'next';
++import { getAllPosts } from '@/lib/blog';
+ 
+ const BASE_URL = 'https://www.ampenergy.ae';
+ 
+-// Add blog post slugs here as you publish new content
+-const blogPosts: { slug: string; lastModified: string }[] = [
+-  // { slug: 'getting-started-with-energy-monitoring', lastModified: '2026-02-20' },
+-  // { slug: 'case-study-ikea', lastModified: '2026-02-15' },
+-];
+-
+ export default function sitemap(): MetadataRoute.Sitemap {
+   const staticPages: MetadataRoute.Sitemap = [
+     {
+@@ -48,9 +43,10 @@ export default function sitemap(): MetadataRoute.Sitemap {
+     },
+   ];
+ 
+-  const blogPages: MetadataRoute.Sitemap = blogPosts.map((post) => ({
++  const posts = getAllPosts();
++  const blogPages: MetadataRoute.Sitemap = posts.map((post) => ({
+     url: `${BASE_URL}/blog/${post.slug}`,
+-    lastModified: new Date(post.lastModified),
++    lastModified: new Date(post.date),
+     changeFrequency: 'monthly' as const,
+     priority: 0.6,
+   }));
+diff --git a/src/components/Header.tsx b/src/components/Header.tsx
+index 8197b08..395039a 100644
+--- a/src/components/Header.tsx
++++ b/src/components/Header.tsx
+@@ -8,6 +8,7 @@ import { MenuIcon, CloseIcon } from "@/components/icons";
+ 
+ const navLinks = [
+   { href: "/product", label: "Product" },
++  { href: "/blog", label: "Blog" },
+   { href: "/about", label: "About" },
+   { href: "/contact", label: "Contact" },
+ ];
+diff --git a/src/components/blog/MarkdownRenderer.tsx b/src/components/blog/MarkdownRenderer.tsx
+new file mode 100644
+index 0000000..62532f0
+--- /dev/null
++++ b/src/components/blog/MarkdownRenderer.tsx
+@@ -0,0 +1,102 @@
++"use client";
++
++import { useMemo } from "react";
++
++// Lightweight markdown-to-HTML renderer
++// Handles: headings, paragraphs, bold, italic, links, lists, blockquotes, code, hr
++function markdownToHtml(md: string): string {
++  let html = md;
++
++  // Code blocks (fenced)
++  html = html.replace(
++    /```(\w*)\n([\s\S]*?)```/g,
++    '<pre class="blog-code-block"><code class="language-$1">$2</code></pre>'
++  );
++
++  // Inline code
++  html = html.replace(/`([^`]+)`/g, '<code class="blog-inline-code">$1</code>');
++
++  // Headings
++  html = html.replace(/^#### (.+)$/gm, '<h4 class="blog-h4">$1</h4>');
++  html = html.replace(/^### (.+)$/gm, '<h3 class="blog-h3">$1</h3>');
++  html = html.replace(/^## (.+)$/gm, '<h2 class="blog-h2">$1</h2>');
++
++  // Horizontal rules
++  html = html.replace(/^---$/gm, '<hr class="blog-hr" />');
++
++  // Blockquotes
++  html = html.replace(
++    /^> (.+)$/gm,
++    '<blockquote class="blog-blockquote">$1</blockquote>'
++  );
++
++  // Bold and italic
++  html = html.replace(/\*\*\*(.+?)\*\*\*/g, "<strong><em>$1</em></strong>");
++  html = html.replace(/\*\*(.+?)\*\*/g, "<strong>$1</strong>");
++  html = html.replace(/\*(.+?)\*/g, "<em>$1</em>");
++
++  // Links
++  html = html.replace(
++    /\[([^\]]+)\]\(([^)]+)\)/g,
++    '<a href="$2" class="blog-link">$1</a>'
++  );
++
++  // Unordered lists
++  html = html.replace(
++    /(?:^|\n)((?:- .+\n?)+)/g,
++    (match, listBlock: string) => {
++      const items = listBlock
++        .trim()
++        .split("\n")
++        .map((line: string) => `<li>${line.replace(/^- /, "")}</li>`)
++        .join("\n");
++      return `\n<ul class="blog-ul">${items}</ul>\n`;
++    }
++  );
++
++  // Ordered lists
++  html = html.replace(
++    /(?:^|\n)((?:\d+\. .+\n?)+)/g,
++    (match, listBlock: string) => {
++      const items = listBlock
++        .trim()
++        .split("\n")
++        .map((line: string) => `<li>${line.replace(/^\d+\. /, "")}</li>`)
++        .join("\n");
++      return `\n<ol class="blog-ol">${items}</ol>\n`;
++    }
++  );
++
++  // Paragraphs (lines not already wrapped in HTML tags)
++  const lines = html.split("\n");
++  const processed = lines.map((line) => {
++    const trimmed = line.trim();
++    if (!trimmed) return "";
++    if (
++      trimmed.startsWith("<h") ||
++      trimmed.startsWith("<ul") ||
++      trimmed.startsWith("<ol") ||
++      trimmed.startsWith("<li") ||
++      trimmed.startsWith("</") ||
++      trimmed.startsWith("<pre") ||
++      trimmed.startsWith("<blockquote") ||
++      trimmed.startsWith("<hr")
++    ) {
++      return line;
++    }
++    return `<p class="blog-p">${trimmed}</p>`;
++  });
++
++  return processed.join("\n");
++}
++
++export function MarkdownRenderer({ content }: { content: string }) {
++  const html = useMemo(() => markdownToHtml(content), [content]);
++
++  return (
++    <div
++      className="blog-content"
++      dangerouslySetInnerHTML={{ __html: html }}
++    />
++  );
++}
+diff --git a/src/lib/blog.ts b/src/lib/blog.ts
+new file mode 100644
+index 0000000..a513de9
+--- /dev/null
++++ b/src/lib/blog.ts
+@@ -0,0 +1,104 @@
++import fs from "fs";
++import path from "path";
++import matter from "gray-matter";
++import readingTime from "reading-time";
++
++const BLOG_DIR = path.join(process.cwd(), "content/blog");
++
++export interface BlogPost {
++  slug: string;
++  title: string;
++  description: string;
++  date: string;
++  author: string;
++  category: "compliance" | "efficiency" | "technology" | "thought-leadership";
++  keywords: string[];
++  readingTime: string;
++  content: string;
++  image?: string;
++  featured?: boolean;
++}
++
++export interface BlogPostMeta
++  extends Omit<BlogPost, "content"> {}
++
++const CATEGORY_LABELS: Record<BlogPost["category"], string> = {
++  compliance: "Compliance & Regulation",
++  efficiency: "Operational Efficiency",
++  technology: "Technology & Innovation",
++  "thought-leadership": "Industry Insights",
++};
++
++export function getCategoryLabel(category: BlogPost["category"]): string {
++  return CATEGORY_LABELS[category] || category;
++}
++
++export function getAllPosts(): BlogPostMeta[] {
++  if (!fs.existsSync(BLOG_DIR)) return [];
++
++  const files = fs.readdirSync(BLOG_DIR).filter((f) => f.endsWith(".mdx") || f.endsWith(".md"));
++
++  const posts = files.map((filename) => {
++    const slug = filename.replace(/\.mdx?$/, "");
++    const filePath = path.join(BLOG_DIR, filename);
++    const fileContent = fs.readFileSync(filePath, "utf-8");
++    const { data, content } = matter(fileContent);
++    const stats = readingTime(content);
++
++    return {
++      slug,
++      title: data.title || "",
++      description: data.description || "",
++      date: data.date || "",
++      author: data.author || "Amp Team",
++      category: data.category || "efficiency",
++      keywords: data.keywords || [],
++      readingTime: stats.text,
++      image: data.image || undefined,
++      featured: data.featured || false,
++    } as BlogPostMeta;
++  });
++
++  return posts.sort(
++    (a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()
++  );
++}
++
++export function getPostBySlug(slug: string): BlogPost | null {
++  const mdxPath = path.join(BLOG_DIR, `${slug}.mdx`);
++  const mdPath = path.join(BLOG_DIR, `${slug}.md`);
++
++  const filePath = fs.existsSync(mdxPath)
++    ? mdxPath
++    : fs.existsSync(mdPath)
++    ? mdPath
++    : null;
++
++  if (!filePath) return null;
++
++  const fileContent = fs.readFileSync(filePath, "utf-8");
++  const { data, content } = matter(fileContent);
++  const stats = readingTime(content);
++
++  return {
++    slug,
++    title: data.title || "",
++    description: data.description || "",
++    date: data.date || "",
++    author: data.author || "Amp Team",
++    category: data.category || "efficiency",
++    keywords: data.keywords || [],
++    readingTime: stats.text,
++    content,
++    image: data.image || undefined,
++    featured: data.featured || false,
++  };
++}
++
++export function getAllSlugs(): string[] {
++  if (!fs.existsSync(BLOG_DIR)) return [];
++  return fs
++    .readdirSync(BLOG_DIR)
++    .filter((f) => f.endsWith(".mdx") || f.endsWith(".md"))
++    .map((f) => f.replace(/\.mdx?$/, ""));
++}
+diff --git a/src/lib/pipeline/generate.ts b/src/lib/pipeline/generate.ts
+new file mode 100644
+index 0000000..5fb906b
+--- /dev/null
++++ b/src/lib/pipeline/generate.ts
+@@ -0,0 +1,195 @@
++import fs from "fs";
++import path from "path";
++import { getAllPosts } from "@/lib/blog";
++
++const ANTHROPIC_API_KEY = process.env.ANTHROPIC_API_KEY;
++const ANTHROPIC_API = "https://api.anthropic.com/v1/messages";
++
++// Load context files from the repo
++function loadContext(filename: string): string {
++  const filePath = path.join(process.cwd(), "context/blog", filename);
++  if (fs.existsSync(filePath)) {
++    return fs.readFileSync(filePath, "utf-8");
++  }
++  return "";
++}
++
++function getPublishedPostsIndex(): string {
++  const posts = getAllPosts();
++  if (posts.length === 0) return "No blog posts published yet.";
++  return posts
++    .map(
++      (p) =>
++        `- "${p.title}" (${p.category}, keyword focus: ${p.keywords.join(", ")}, slug: ${p.slug})`
++    )
++    .join("\n");
++}
++
++async function callClaude(
++  systemPrompt: string,
++  userMessage: string
++): Promise<string> {
++  const res = await fetch(ANTHROPIC_API, {
++    method: "POST",
++    headers: {
++      "Content-Type": "application/json",
++      "x-api-key": ANTHROPIC_API_KEY!,
++      "anthropic-version": "2023-06-01",
++    },
++    body: JSON.stringify({
++      model: "claude-sonnet-4-20250514",
++      max_tokens: 4096,
++      system: systemPrompt,
++      messages: [{ role: "user", content: userMessage }],
++    }),
++  });
++
++  if (!res.ok) {
++    const error = await res.text();
++    throw new Error(`Claude API error: ${res.status} - ${error}`);
++  }
++
++  const data = await res.json();
++  return data.content[0]?.text || "";
++}
++
++async function callClaudeWithSearch(
++  systemPrompt: string,
++  userMessage: string
++): Promise<string> {
++  const res = await fetch(ANTHROPIC_API, {
++    method: "POST",
++    headers: {
++      "Content-Type": "application/json",
++      "x-api-key": ANTHROPIC_API_KEY!,
++      "anthropic-version": "2023-06-01",
++    },
++    body: JSON.stringify({
++      model: "claude-sonnet-4-20250514",
++      max_tokens: 4096,
++      system: systemPrompt,
++      tools: [{ type: "web_search_20250305", name: "web_search" }],
++      messages: [{ role: "user", content: userMessage }],
++    }),
++  });
++
++  if (!res.ok) {
++    const error = await res.text();
++    throw new Error(`Claude API error: ${res.status} - ${error}`);
++  }
++
++  const data = await res.json();
++  // Extract text from potentially multiple content blocks (search results + text)
++  const textBlocks = data.content?.filter(
++    (block: { type: string }) => block.type === "text"
++  );
++  return textBlocks?.map((b: { text: string }) => b.text).join("\n") || "";
++}
++
++export async function generateTopics(): Promise<string> {
++  const brandVoice = loadContext("brand-voice.md");
++  const seoKeywords = loadContext("seo-keywords.md");
++  const publishedPosts = getPublishedPostsIndex();
++
++  const systemPrompt = `You are the content strategist for Amp Energy, a building energy intelligence platform based in Dubai, UAE. You generate blog topic proposals that serve SEO goals, speak to specific buyer personas, and leverage timely industry news.
++
++## Brand & Voice Context
++${brandVoice}
++
++## SEO Keyword Targets
++${seoKeywords}
++
++## Already Published Posts (avoid repeating topics)
++${publishedPosts}
++
++## Your Task
++Generate exactly 5 blog topic proposals. Each must target a DIFFERENT keyword cluster from the SEO map and a different primary persona.
++
++For each topic, use web search to find relevant recent news, regulatory updates, or industry developments from the UAE/GCC energy and buildings sector that can make the topic timely and newsworthy.
++
++## Output Format
++Return a valid JSON array with exactly 5 objects, each with these fields:
++- "title": Proposed blog post title (under 60 chars, contains primary keyword naturally)
++- "brief": 2-3 sentence description of the angle, what makes it timely, and the value to the reader
++- "keyword": The primary SEO keyword being targeted
++- "persona": The primary buyer persona (Facility Champion, Sustainability Strategist, Executive Sponsor, Procurement Gatekeeper, or Channel Multiplier)
++- "pillar": Content pillar (compliance, efficiency, technology, or thought-leadership)
++- "timeliness": Why this topic is relevant right now (news hook, regulatory deadline, seasonal factor)
++
++Return ONLY the JSON array. No markdown, no code fences, no explanation.`;
++
++  const userMessage = `Today's date is ${new Date().toISOString().split("T")[0]}. Search for the latest news about UAE energy policy, GCC building energy efficiency, sustainability regulations in the Middle East, and commercial building technology trends. Then generate 5 blog topic proposals based on what you find combined with our SEO keyword targets.`;
++
++  return callClaudeWithSearch(systemPrompt, userMessage);
++}
++
++export async function generateBlogPost(
++  title: string,
++  keyword: string,
++  persona: string,
++  pillar: string,
++  brief: string
++): Promise<{ content: string; description: string; keywords: string[] }> {
++  const brandVoice = loadContext("brand-voice.md");
++  const seoKeywords = loadContext("seo-keywords.md");
++  const publishedPosts = getPublishedPostsIndex();
++
++  const systemPrompt = `You are a senior content writer for Amp Energy, a building energy intelligence platform in Dubai, UAE. You write expert blog posts that rank for SEO, establish thought leadership, and resonate with specific buyer personas.
++
++## Brand & Voice Context
++${brandVoice}
++
++## SEO Keyword Targets
++${seoKeywords}
++
++## Already Published Posts (link to these where natural)
++${publishedPosts}
++
++## Amp Product Facts (weave in naturally, never forced)
++- Equipment-level energy monitoring with clamp-on sensors
++- No BMS required, works on any building
++- 24-hour deployment, zero downtime
++- 10–20% energy savings typically identified
++- <1 year payback period
++- 0.2% margin of error
++- Clients include IKEA, Chalhoub Group, Buro Happold, Amazon, Masdar
++- UAE Federal Decree-Law No. 11 compliance — Scope 2 data collection
++- AI-powered savings recommendations
++- Building energy rating system (A to F)
++- Portfolio-wide multi-site visibility
++
++## Your Task
++Write a complete blog post with the specifications below.
++
++**Target:**
++- Title: ${title}
++- Primary keyword: ${keyword}
++- Target persona: ${persona}
++- Content pillar: ${pillar}
++- Brief: ${brief}
++
++## Output Format
++Return a JSON object with these fields:
++- "description": Meta description (150-160 chars, includes primary keyword)
++- "keywords": Array of 5-8 relevant keywords/phrases
++- "content": The full blog post in Markdown format following the structure in the brand voice guide (Hook → Context → Insight → Amp Connection → Conclusion + CTA → FAQ). 800-1200 words excluding FAQ. Include 2-3 FAQ items at the end under a "## Frequently Asked Questions" heading with ### for each question.
++
++Return ONLY the JSON object. No markdown code fences, no explanation.`;
++
++  const userMessage = `Write the blog post now. Use web search if you need current data, statistics, or recent news to support the article. Make it genuinely insightful and useful — not generic filler.`;
++
++  const response = await callClaudeWithSearch(systemPrompt, userMessage);
++
++  try {
++    // Try to parse the response as JSON
++    const cleaned = response.replace(/```json\s*/g, "").replace(/```\s*/g, "").trim();
++    return JSON.parse(cleaned);
++  } catch {
++    // If JSON parsing fails, try to extract JSON from the response
++    const jsonMatch = response.match(/\{[\s\S]*\}/);
++    if (jsonMatch) {
++      return JSON.parse(jsonMatch[0]);
++    }
++    throw new Error("Failed to parse blog post response as JSON");
++  }
++}
+diff --git a/src/lib/pipeline/publish.ts b/src/lib/pipeline/publish.ts
+new file mode 100644
+index 0000000..cb348a9
+--- /dev/null
++++ b/src/lib/pipeline/publish.ts
+@@ -0,0 +1,54 @@
++import fs from "fs";
++import path from "path";
++
++const BLOG_DIR = path.join(process.cwd(), "content/blog");
++
++interface PublishInput {
++  slug: string;
++  title: string;
++  description: string;
++  date: string;
++  author: string;
++  category: string;
++  keywords: string[];
++  content: string;
++  featured?: boolean;
++}
++
++function generateSlug(title: string): string {
++  return title
++    .toLowerCase()
++    .replace(/[^a-z0-9\s-]/g, "")
++    .replace(/\s+/g, "-")
++    .replace(/-+/g, "-")
++    .replace(/^-|-$/g, "")
++    .slice(0, 80);
++}
++
++export function createMdxFile(input: PublishInput): string {
++  const slug = input.slug || generateSlug(input.title);
++  const filePath = path.join(BLOG_DIR, `${slug}.mdx`);
++
++  // Ensure directory exists
++  if (!fs.existsSync(BLOG_DIR)) {
++    fs.mkdirSync(BLOG_DIR, { recursive: true });
++  }
++
++  const frontmatter = `---
++title: "${input.title.replace(/"/g, '\\"')}"
++description: "${input.description.replace(/"/g, '\\"')}"
++date: "${input.date}"
++author: "${input.author}"
++category: "${input.category}"
++keywords:
++${input.keywords.map((k) => `  - ${k}`).join("\n")}
++featured: ${input.featured || false}
++---`;
++
++  const fileContent = `${frontmatter}\n\n${input.content}`;
++  fs.writeFileSync(filePath, fileContent, "utf-8");
++
++  return slug;
++}
++
++export { generateSlug };
+diff --git a/src/lib/pipeline/slack.ts b/src/lib/pipeline/slack.ts
+new file mode 100644
+index 0000000..7a8782e
+--- /dev/null
++++ b/src/lib/pipeline/slack.ts
+@@ -0,0 +1,174 @@
++const SLACK_BOT_TOKEN = process.env.SLACK_BOT_TOKEN;
++const SLACK_CHANNEL_ID = process.env.SLACK_CHANNEL_ID;
++
++const SLACK_API = "https://slack.com/api";
++
++interface SlackBlock {
++  type: string;
++  text?: { type: string; text: string; emoji?: boolean };
++  elements?: { type: string; text: string }[];
++  fields?: { type: string; text: string }[];
++}
++
++async function slackFetch(method: string, body: Record<string, unknown>) {
++  const res = await fetch(`${SLACK_API}/${method}`, {
++    method: "POST",
++    headers: {
++      Authorization: `Bearer ${SLACK_BOT_TOKEN}`,
++      "Content-Type": "application/json",
++    },
++    body: JSON.stringify(body),
++  });
++  const data = await res.json();
++  if (!data.ok) {
++    throw new Error(`Slack API error (${method}): ${data.error}`);
++  }
++  return data;
++}
++
++export async function postMessage(text: string, blocks?: SlackBlock[]) {
++  return slackFetch("chat.postMessage", {
++    channel: SLACK_CHANNEL_ID,
++    text,
++    blocks,
++  });
++}
++
++export async function postThreadReply(
++  threadTs: string,
++  text: string,
++  blocks?: SlackBlock[]
++) {
++  return slackFetch("chat.postMessage", {
++    channel: SLACK_CHANNEL_ID,
++    thread_ts: threadTs,
++    text,
++    blocks,
++  });
++}
++
++export async function getReactions(messageTs: string) {
++  const res = await fetch(
++    `${SLACK_API}/reactions.get?channel=${SLACK_CHANNEL_ID}&timestamp=${messageTs}`,
++    {
++      headers: { Authorization: `Bearer ${SLACK_BOT_TOKEN}` },
++    }
++  );
++  const data = await res.json();
++  if (!data.ok) return [];
++  return data.message?.reactions || [];
++}
++
++export function formatTopicProposal(topics: TopicProposal[]) {
++  const blocks: SlackBlock[] = [
++    {
++      type: "header",
++      text: {
++        type: "plain_text",
++        text: "📝 Blog Topic Proposals — This Week",
++        emoji: true,
++      },
++    },
++    {
++      type: "section",
++      text: {
++        type: "mrkdwn",
++        text: "React with ✅ on *2 topics* to approve them (one for Tuesday, one for Thursday). Reply in a thread to suggest edits.",
++      },
++    },
++    { type: "divider" },
++  ];
++
++  topics.forEach((topic, i) => {
++    blocks.push({
++      type: "section",
++      text: {
++        type: "mrkdwn",
++        text: `*${i + 1}. ${topic.title}*\n${topic.brief}`,
++      },
++    });
++    blocks.push({
++      type: "section",
++      fields: [
++        {
++          type: "mrkdwn",
++          text: `*Keyword:* ${topic.keyword}`,
++        },
++        {
++          type: "mrkdwn",
++          text: `*Persona:* ${topic.persona}`,
++        },
++        {
++          type: "mrkdwn",
++          text: `*Pillar:* ${topic.pillar}`,
++        },
++        {
++          type: "mrkdwn",
++          text: `*Timeliness:* ${topic.timeliness}`,
++        },
++      ],
++    });
++    blocks.push({ type: "divider" });
++  });
++
++  return blocks;
++}
++
++export function formatDraftPreview(draft: DraftPreview) {
++  const blocks: SlackBlock[] = [
++    {
++      type: "header",
++      text: {
++        type: "plain_text",
++        text: `📄 Draft Ready: ${draft.publishDay}`,
++        emoji: true,
++      },
++    },
++    {
++      type: "section",
++      text: {
++        type: "mrkdwn",
++        text: `*${draft.title}*\n\n${draft.description}\n\n*Keyword:* ${draft.keyword} | *Reading time:* ${draft.readingTime} | *Words:* ${draft.wordCount}`,
++      },
++    },
++    { type: "divider" },
++    {
++      type: "section",
++      text: {
++        type: "mrkdwn",
++        text: `*Preview (first 500 chars):*\n\`\`\`${draft.contentPreview}\`\`\``,
++      },
++    },
++    { type: "divider" },
++    {
++      type: "section",
++      text: {
++        type: "mrkdwn",
++        text: "✅ React with checkmark to *publish*\n✏️ Reply in thread with *edit requests*\n❌ React with X to *reject*",
++      },
++    },
++  ];
++
++  return blocks;
++}
++
++export interface TopicProposal {
++  title: string;
++  brief: string;
++  keyword: string;
++  persona: string;
++  pillar: string;
++  timeliness: string;
++}
++
++export interface DraftPreview {
++  title: string;
++  description: string;
++  keyword: string;
++  readingTime: string;
++  wordCount: number;
++  contentPreview: string;
++  publishDay: string;
++  slug: string;
++  fullContent: string;
++}

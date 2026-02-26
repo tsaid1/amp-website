@@ -20,11 +20,6 @@ const nextConfig: NextConfig = {
         destination: '/privacy',
         permanent: true,
       },
-      {
-        source: '/blog/uae-climate-law-takes-effect-this-month-what-facility-managers-and-escos-need-to-know',
-        destination: '/',
-        permanent: true,
-      },
     ];
   },
 };
