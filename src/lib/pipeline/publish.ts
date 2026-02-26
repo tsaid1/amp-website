@@ -176,14 +176,51 @@ export async function publishDraftFromGitHub(slug: string, title: string): Promi
   const draftPath = `drafts/${slug}.mdx`;
   const publishPath = `content/blog/${slug}.mdx`;
 
-  // Read the draft content
   const content = await getGitHubFile(draftPath);
-
-  // Write to published location
   await putGitHubFile(publishPath, content, `blog: publish ${title} [automated]`);
-
-  // Delete the draft
   await deleteGitHubFile(draftPath, `blog: remove draft ${slug} [automated]`);
+}
+
+export async function moveDraftToApproved(slug: string): Promise<void> {
+  const draftPath = `drafts/${slug}.mdx`;
+  const approvedPath = `approved/${slug}.mdx`;
+
+  const content = await getGitHubFile(draftPath);
+  await putGitHubFile(approvedPath, content, `blog: approve ${slug} [automated]`);
+  await deleteGitHubFile(draftPath, `blog: remove draft ${slug} after approval [automated]`);
+}
+
+export async function listApprovedPosts(): Promise<string[]> {
+  if (!GITHUB_PAT) {
+    throw new Error("GITHUB_PAT environment variable is not set");
+  }
+
+  const url = `https://api.github.com/repos/${GITHUB_REPO}/contents/approved`;
+  const res = await fetch(url, {
+    headers: { Authorization: `Bearer ${GITHUB_PAT}` },
+  });
+
+  if (res.status === 404) return [];
+  if (!res.ok) {
+    const error = await res.text();
+    throw new Error(`GitHub API error (${res.status}): ${error}`);
+  }
+
+  const files: { name: string }[] = await res.json();
+  return files
+    .filter((f) => f.name.endsWith(".mdx"))
+    .map((f) => f.name.replace(/\.mdx$/, ""));
+}
+
+export async function publishApprovedPost(slug: string): Promise<string> {
+  const approvedPath = `approved/${slug}.mdx`;
+  const publishPath = `content/blog/${slug}.mdx`;
+
+  const content = await getGitHubFile(approvedPath);
+  await putGitHubFile(publishPath, content, `blog: publish ${slug} [scheduled]`);
+  await deleteGitHubFile(approvedPath, `blog: remove approved ${slug} after publish [automated]`);
+
+  return content;
 }
 
 export { generateSlug };

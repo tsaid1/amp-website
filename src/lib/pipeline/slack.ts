@@ -129,7 +129,7 @@ export function formatDraftPreview(draft: DraftPreview) {
       type: "section",
       text: {
         type: "mrkdwn",
-        text: "✅ React with checkmark to *publish*\n✏️ Reply in thread with *edit requests*\n❌ React with X to *reject*",
+        text: "✅ React with checkmark to *approve for scheduled publish*\n✏️ Reply in thread with *edit requests*\n❌ React with X to *reject*",
       },
     },
   ];

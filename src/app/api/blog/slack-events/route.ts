@@ -14,7 +14,7 @@ import { generateBlogPost } from "@/lib/pipeline/generate";
 import {
   generateSlug,
   saveDraftToGitHub,
-  publishDraftFromGitHub,
+  moveDraftToApproved,
 } from "@/lib/pipeline/publish";
 import readingTime from "reading-time";
 
@@ -194,6 +194,41 @@ async function generateDraft(
   await postThreadReply(threadTs, `✅ Draft generated and posted for review: *${topic.title}*`);
 }
 
+// --- Next publish date calculation (Tue/Thu 9AM GST) ---
+
+function getNextPublishDate(): string {
+  // GST is UTC+4
+  const now = new Date();
+  const gstOffset = 4 * 60 * 60 * 1000;
+  const gstNow = new Date(now.getTime() + gstOffset);
+  const dayOfWeek = gstNow.getUTCDay(); // 0=Sun, 1=Mon, 2=Tue, 3=Wed, 4=Thu, 5=Fri, 6=Sat
+
+  let daysUntilPublish: number;
+  if (dayOfWeek <= 1) {
+    // Sun(0) or Mon(1) → next Tuesday
+    daysUntilPublish = 2 - dayOfWeek;
+  } else if (dayOfWeek <= 3) {
+    // Tue(2) or Wed(3) → next Thursday
+    daysUntilPublish = 4 - dayOfWeek;
+  } else {
+    // Thu(4), Fri(5), Sat(6) → next Tuesday
+    daysUntilPublish = (7 - dayOfWeek) + 2;
+  }
+
+  const publishDate = new Date(gstNow);
+  publishDate.setUTCDate(publishDate.getUTCDate() + daysUntilPublish);
+
+  const dayNames = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
+  const monthNames = ["January", "February", "March", "April", "May", "June",
+    "July", "August", "September", "October", "November", "December"];
+
+  const dayName = dayNames[publishDate.getUTCDay()];
+  const month = monthNames[publishDate.getUTCMonth()];
+  const date = publishDate.getUTCDate();
+
+  return `${dayName}, ${month} ${date}`;
+}
+
 // --- Route handler ---
 
 export async function POST(req: NextRequest) {
@@ -268,7 +303,7 @@ export async function POST(req: NextRequest) {
             return;
           }
 
-          // --- Path 2: Draft preview → publish post ---
+          // --- Path 2: Draft preview → approve for scheduled publish ---
           if (isDraftPreviewMessage(message.text)) {
             const draftThreadTs = message.ts;
 
@@ -284,17 +319,18 @@ export async function POST(req: NextRequest) {
               return;
             }
 
-            await postThreadReply(draftThreadTs, `⏳ Publishing: *${draftMeta.title}*...`);
+            await postThreadReply(draftThreadTs, `⏳ Approving: *${draftMeta.title}*...`);
 
-            // Move from drafts/ to content/blog/ via GitHub API
-            await publishDraftFromGitHub(draftMeta.slug, draftMeta.title);
+            // Move from drafts/ to approved/ via GitHub API
+            await moveDraftToApproved(draftMeta.slug);
 
+            const publishDate = getNextPublishDate();
             await postThreadReply(
               draftThreadTs,
-              `✅ Published! Live at: https://www.ampenergy.ae/blog/${draftMeta.slug}`
+              `✅ Approved! Scheduled for publish on ${publishDate} at 9:00 AM GST`
             );
 
-            await addReaction(item.channel, item.ts, "rocket").catch(() => {});
+            await addReaction(item.channel, item.ts, "calendar").catch(() => {});
             return;
           }
         } catch (err) {
