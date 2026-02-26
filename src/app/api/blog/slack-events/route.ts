@@ -143,6 +143,8 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Invalid JSON" }, { status: 400 });
   }
 
+  console.log("Slack event received:", JSON.stringify(body, null, 2));
+
   // Handle URL verification challenge
   if (body.type === "url_verification") {
     return NextResponse.json({ challenge: body.challenge });
@@ -151,20 +153,24 @@ export async function POST(req: NextRequest) {
   // Handle event callbacks
   if (body.type === "event_callback") {
     const event = body.event as Record<string, unknown>;
+    console.log("Event type:", event.type, "Reaction:", event.reaction);
 
     if (
       event.type === "reaction_added" &&
       event.reaction === "white_check_mark"
     ) {
       const item = event.item as { channel: string; ts: string; type: string };
+      console.log("Channel match:", item.channel, "Expected:", SLACK_CHANNEL_ID);
 
       // Only handle reactions in the blog pipeline channel
       if (item.channel !== SLACK_CHANNEL_ID) {
+        console.log("Ignoring: channel mismatch");
         return NextResponse.json({ ok: true });
       }
 
       // Only handle reactions on messages
       if (item.type !== "message") {
+        console.log("Ignoring: item type is", item.type, "not message");
         return NextResponse.json({ ok: true });
       }
 
@@ -173,13 +179,16 @@ export async function POST(req: NextRequest) {
         try {
           // Fetch the reacted-to message to get topic data
           const message = await getMessage(item.channel, item.ts);
+          console.log("Fetched message text:", message?.text?.slice(0, 200));
           if (!message?.text) return;
 
           const topic = parseTopicMetadata(message.text);
+          console.log("Parsed topic metadata:", topic);
           if (!topic) return; // Not a topic message — ignore
 
           // This message is a thread reply. Get the parent thread_ts.
           const threadTs = message.thread_ts;
+          console.log("Thread ts:", threadTs);
           if (!threadTs) return; // Not in a thread — ignore
 
           // Count total ✅ across the thread to determine Tuesday vs Thursday
@@ -187,8 +196,12 @@ export async function POST(req: NextRequest) {
             item.channel,
             threadTs
           );
+          console.log("Total ✅ reactions in thread:", totalCheckmarks);
 
-          if (totalCheckmarks > 2) return; // Already processed both slots
+          if (totalCheckmarks > 2) {
+            console.log("Ignoring: already processed both slots");
+            return;
+          }
 
           const publishDay = totalCheckmarks <= 1 ? "Tuesday" : "Thursday";
 
@@ -198,6 +211,7 @@ export async function POST(req: NextRequest) {
             `⏳ Generating ${publishDay}'s draft: *${topic.title}*...`
           );
 
+          console.log("Triggering draft generation for:", publishDay, topic.title);
           // Fire off draft generation
           triggerDraftGeneration(topic, publishDay, threadTs);
         } catch (err) {
