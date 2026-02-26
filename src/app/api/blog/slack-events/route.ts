@@ -89,7 +89,7 @@ async function countCheckmarksInThread(
 
 // --- Trigger draft generation asynchronously ---
 
-function triggerDraftGeneration(
+async function triggerDraftGeneration(
   topic: TopicData,
   publishDay: string,
   threadTs: string
@@ -98,27 +98,35 @@ function triggerDraftGeneration(
     ? `https://${process.env.VERCEL_URL}`
     : process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000";
 
-  // Fire-and-forget — don't await
-  fetch(`${baseUrl}/api/blog/generate-post`, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      Authorization: `Bearer ${PIPELINE_SECRET}`,
-    },
-    body: JSON.stringify({
-      title: topic.title,
-      keyword: topic.keyword,
-      persona: topic.persona,
-      pillar: topic.pillar,
-      brief: topic.brief,
-      publishDay,
-    }),
-  }).catch((err) => {
-    console.error("Failed to trigger draft generation:", err);
-    postThreadReply(threadTs, `❌ Failed to trigger draft generation: ${err.message}`).catch(
+  const url = `${baseUrl}/api/blog/generate-post`;
+  const requestBody = {
+    title: topic.title,
+    keyword: topic.keyword,
+    persona: topic.persona,
+    pillar: topic.pillar,
+    brief: topic.brief,
+    publishDay,
+  };
+
+  console.log("Generate-post URL:", url);
+  console.log("Generate-post request body:", JSON.stringify(requestBody, null, 2));
+
+  try {
+    const response = await fetch(url, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${PIPELINE_SECRET}`,
+      },
+      body: JSON.stringify(requestBody),
+    });
+    console.log("Generate-post response:", response.status);
+  } catch (err) {
+    console.error("Generate-post fetch error:", err);
+    postThreadReply(threadTs, `❌ Failed to trigger draft generation: ${err instanceof Error ? err.message : err}`).catch(
       () => {}
     );
-  });
+  }
 }
 
 // --- Route handler ---
