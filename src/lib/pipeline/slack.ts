@@ -60,15 +60,19 @@ export async function getReactions(messageTs: string) {
 }
 
 export async function getMessage(channelId: string, messageTs: string) {
+  // Use conversations.replies — works for both threaded and non-threaded messages.
+  // conversations.history only returns top-level messages, missing thread replies.
   const res = await fetch(
-    `${SLACK_API}/conversations.history?channel=${channelId}&latest=${messageTs}&inclusive=true&limit=1`,
+    `${SLACK_API}/conversations.replies?channel=${channelId}&ts=${messageTs}&latest=${messageTs}&inclusive=true&limit=1`,
     {
       headers: { Authorization: `Bearer ${SLACK_BOT_TOKEN}` },
     }
   );
   const data = await res.json();
-  if (!data.ok) throw new Error(`Slack API error (conversations.history): ${data.error}`);
-  return data.messages?.[0] || null;
+  if (!data.ok) throw new Error(`Slack API error (conversations.replies): ${data.error}`);
+  // Find the exact message matching the requested timestamp
+  const match = data.messages?.find((m: { ts: string }) => m.ts === messageTs);
+  return match || data.messages?.[0] || null;
 }
 
 export async function getThreadReplies(channelId: string, threadTs: string) {
