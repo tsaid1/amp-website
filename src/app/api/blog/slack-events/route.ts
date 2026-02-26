@@ -181,11 +181,15 @@ export async function POST(req: NextRequest) {
           // Fetch the reacted-to message to get topic data
           console.log("Fetching message:", item.channel, item.ts);
           const message = await getMessage(item.channel, item.ts);
-          console.log("Fetched message text:", message?.text?.slice(0, 200));
+          console.log("Fetched message text (full):", JSON.stringify(message?.text));
           if (!message?.text) {
             console.log("Ignoring: message has no text");
             return;
           }
+
+          const metadataRegex = /📊\s*_Title:\s*(.+?)\s*\|\s*Keyword:\s*(.+?)\s*\|\s*Persona:\s*(.+?)\s*\|\s*Pillar:\s*(.+?)\s*\|\s*Brief:\s*(.+?)_/;
+          console.log("Metadata regex:", metadataRegex.source);
+          console.log("Regex test result:", metadataRegex.test(message.text));
 
           const topic = parseTopicMetadata(message.text);
           console.log("Parsed topic metadata:", topic);
