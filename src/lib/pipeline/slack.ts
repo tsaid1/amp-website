@@ -83,61 +83,6 @@ export async function getThreadReplies(channelId: string, threadTs: string) {
   return data.messages || [];
 }
 
-export function formatTopicProposal(topics: TopicProposal[]) {
-  const blocks: SlackBlock[] = [
-    {
-      type: "header",
-      text: {
-        type: "plain_text",
-        text: "📝 Blog Topic Proposals — This Week",
-        emoji: true,
-      },
-    },
-    {
-      type: "section",
-      text: {
-        type: "mrkdwn",
-        text: "React with ✅ on *2 topics* to approve them (one for Tuesday, one for Thursday). Reply in a thread to suggest edits.",
-      },
-    },
-    { type: "divider" },
-  ];
-
-  topics.forEach((topic, i) => {
-    blocks.push({
-      type: "section",
-      text: {
-        type: "mrkdwn",
-        text: `*${i + 1}. ${topic.title}*\n${topic.brief}`,
-      },
-    });
-    blocks.push({
-      type: "section",
-      fields: [
-        {
-          type: "mrkdwn",
-          text: `*Keyword:* ${topic.keyword}`,
-        },
-        {
-          type: "mrkdwn",
-          text: `*Persona:* ${topic.persona}`,
-        },
-        {
-          type: "mrkdwn",
-          text: `*Pillar:* ${topic.pillar}`,
-        },
-        {
-          type: "mrkdwn",
-          text: `*Timeliness:* ${topic.timeliness}`,
-        },
-      ],
-    });
-    blocks.push({ type: "divider" });
-  });
-
-  return blocks;
-}
-
 export function formatDraftPreview(draft: DraftPreview) {
   const blocks: SlackBlock[] = [
     {
