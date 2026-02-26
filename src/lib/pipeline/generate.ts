@@ -180,16 +180,25 @@ Return ONLY the JSON object. No markdown code fences, no explanation.`;
 
   const response = await callClaudeWithSearch(systemPrompt, userMessage);
 
+  let parsed: { content: string; description: string; keywords: string[] };
   try {
     // Try to parse the response as JSON
     const cleaned = response.replace(/```json\s*/g, "").replace(/```\s*/g, "").trim();
-    return JSON.parse(cleaned);
+    parsed = JSON.parse(cleaned);
   } catch {
     // If JSON parsing fails, try to extract JSON from the response
     const jsonMatch = response.match(/\{[\s\S]*\}/);
     if (jsonMatch) {
-      return JSON.parse(jsonMatch[0]);
+      parsed = JSON.parse(jsonMatch[0]);
+    } else {
+      throw new Error("Failed to parse blog post response as JSON");
     }
-    throw new Error("Failed to parse blog post response as JSON");
   }
+
+  // Strip citation tags that Claude's web search may inject
+  parsed.content = parsed.content
+    .replace(/(<cite[^>]*>|<\/cite>)/g, "")
+    .replace(/(<source[^>]*>|<\/source>)/g, "");
+
+  return parsed;
 }

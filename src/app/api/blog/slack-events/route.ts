@@ -99,7 +99,6 @@ async function generateDraft(
   publishDay: string,
   threadTs: string
 ) {
-  console.log("Starting generateBlogPost for:", topic.title);
   const result = await generateBlogPost(
     topic.title,
     topic.keyword,
@@ -107,12 +106,10 @@ async function generateDraft(
     topic.pillar,
     topic.brief
   );
-  console.log("generateBlogPost completed, content length:", result.content.length);
 
   const slug = generateSlug(topic.title);
   const stats = readingTime(result.content);
   const wordCount = result.content.split(/\s+/).length;
-  console.log("Draft stats — slug:", slug, "readingTime:", stats.text, "words:", wordCount);
 
   const draft: DraftPreview = {
     title: topic.title,
@@ -126,13 +123,11 @@ async function generateDraft(
     fullContent: result.content,
   };
 
-  console.log("Posting draft preview to Slack");
   const blocks = formatDraftPreview(draft);
-  const slackResponse = await postMessage(
+  await postMessage(
     `📄 Draft ready for review: "${topic.title}"`,
     blocks
   );
-  console.log("Draft preview posted, ts:", slackResponse.ts);
 
   await postThreadReply(threadTs, `✅ Draft generated and posted for review: *${topic.title}*`);
 }
@@ -160,8 +155,6 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Invalid JSON" }, { status: 400 });
   }
 
-  console.log("Slack event received:", JSON.stringify(body, null, 2));
-
   // Handle URL verification challenge
   if (body.type === "url_verification") {
     return NextResponse.json({ challenge: body.challenge });
@@ -170,86 +163,51 @@ export async function POST(req: NextRequest) {
   // Handle event callbacks
   if (body.type === "event_callback") {
     const event = body.event as Record<string, unknown>;
-    console.log("Event type:", event.type, "Reaction:", event.reaction);
 
     if (
       event.type === "reaction_added" &&
       event.reaction === "white_check_mark"
     ) {
       const item = event.item as { channel: string; ts: string; type: string };
-      console.log("Channel match:", item.channel, "Expected:", SLACK_CHANNEL_ID);
 
       // Only handle reactions in the blog pipeline channel
       if (item.channel !== SLACK_CHANNEL_ID) {
-        console.log("Ignoring: channel mismatch");
         return NextResponse.json({ ok: true });
       }
 
       // Only handle reactions on messages
       if (item.type !== "message") {
-        console.log("Ignoring: item type is", item.type, "not message");
         return NextResponse.json({ ok: true });
       }
 
       // Process async — waitUntil keeps the function alive after returning 200
       async function handleReaction() {
         try {
-          // Fetch the reacted-to message to get topic data
-          console.log("Fetching message:", item.channel, item.ts);
           const message = await getMessage(item.channel, item.ts);
-          console.log("Fetched message text (full):", JSON.stringify(message?.text));
-          if (!message?.text) {
-            console.log("Ignoring: message has no text");
-            return;
-          }
-
-          const metadataRegex = /:bar_chart:\s*_Title:\s*(.+?)\s*\|\s*Keyword:\s*(.+?)\s*\|\s*Persona:\s*(.+?)\s*\|\s*Pillar:\s*(.+?)\s*\|\s*Brief:\s*(.+?)_/;
-          console.log("Metadata regex:", metadataRegex.source);
-          console.log("Regex test result:", metadataRegex.test(message.text));
+          if (!message?.text) return;
 
           const topic = parseTopicMetadata(message.text);
-          console.log("Parsed topic metadata:", topic);
-          if (!topic) {
-            console.log("Ignoring: no topic metadata found in message");
-            return;
-          }
+          if (!topic) return;
 
-          // This message is a thread reply. Get the parent thread_ts.
           const threadTs = message.thread_ts;
-          console.log("Thread ts:", threadTs);
-          if (!threadTs) {
-            console.log("Ignoring: message is not in a thread");
-            return;
-          }
+          if (!threadTs) return;
 
-          // Count total ✅ across the thread to determine Tuesday vs Thursday
-          console.log("Fetching thread replies for:", item.channel, threadTs);
           const totalCheckmarks = await countCheckmarksInThread(
             item.channel,
             threadTs
           );
-          console.log("Total ✅ reactions in thread:", totalCheckmarks);
-
-          if (totalCheckmarks > 2) {
-            console.log("Ignoring: already processed both slots");
-            return;
-          }
+          if (totalCheckmarks > 2) return;
 
           const publishDay = totalCheckmarks <= 1 ? "Tuesday" : "Thursday";
 
-          // Post confirmation in thread
-          console.log("Posting thread confirmation for:", publishDay, topic.title);
           await postThreadReply(
             threadTs,
             `⏳ Generating ${publishDay}'s draft: *${topic.title}*...`
           );
-          console.log("Thread confirmation posted");
 
-          console.log("Generating draft for:", publishDay, topic.title);
           await generateDraft(topic, publishDay, threadTs);
-          console.log("Draft generation complete for:", topic.title);
         } catch (err) {
-          console.error("Error at async reaction handler:", err);
+          console.error("Slack reaction handler error:", err);
         }
       }
 
