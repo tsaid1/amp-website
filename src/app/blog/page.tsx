@@ -2,6 +2,8 @@ import { Metadata } from "next";
 import Link from "next/link";
 import { getAllPosts, getCategoryLabel, type BlogPostMeta } from "@/lib/blog";
 
+export const dynamic = "force-static";
+
 export const metadata: Metadata = {
   title: "Blog | Energy Intelligence Insights",
   description:
