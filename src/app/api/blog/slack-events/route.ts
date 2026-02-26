@@ -56,9 +56,9 @@ interface TopicData {
 }
 
 function parseTopicMetadata(text: string): TopicData | null {
-  // Match the metadata line: 📊 _Title: ... | Keyword: ... | Persona: ... | Pillar: ... | Brief: ..._
+  // Match the metadata line — Slack returns emoji as :bar_chart: not 📊
   const match = text.match(
-    /📊\s*_Title:\s*(.+?)\s*\|\s*Keyword:\s*(.+?)\s*\|\s*Persona:\s*(.+?)\s*\|\s*Pillar:\s*(.+?)\s*\|\s*Brief:\s*(.+?)_/
+    /:bar_chart:\s*_Title:\s*(.+?)\s*\|\s*Keyword:\s*(.+?)\s*\|\s*Persona:\s*(.+?)\s*\|\s*Pillar:\s*(.+?)\s*\|\s*Brief:\s*(.+?)_/
   );
   if (!match) return null;
 
@@ -187,7 +187,7 @@ export async function POST(req: NextRequest) {
             return;
           }
 
-          const metadataRegex = /📊\s*_Title:\s*(.+?)\s*\|\s*Keyword:\s*(.+?)\s*\|\s*Persona:\s*(.+?)\s*\|\s*Pillar:\s*(.+?)\s*\|\s*Brief:\s*(.+?)_/;
+          const metadataRegex = /:bar_chart:\s*_Title:\s*(.+?)\s*\|\s*Keyword:\s*(.+?)\s*\|\s*Persona:\s*(.+?)\s*\|\s*Pillar:\s*(.+?)\s*\|\s*Brief:\s*(.+?)_/;
           console.log("Metadata regex:", metadataRegex.source);
           console.log("Regex test result:", metadataRegex.test(message.text));
 
