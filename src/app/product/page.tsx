@@ -417,13 +417,13 @@ function ProductPageContent() {
               >
                 <Tabs.Trigger
                   value="hub"
-                  className="cursor-pointer px-6 py-2.5 rounded-full text-sm font-medium transition-all data-[state=active]:bg-[var(--color-primary)] data-[state=active]:text-white data-[state=inactive]:text-[var(--muted)] data-[state=inactive]:hover:text-[var(--foreground)] data-[state=inactive]:hover:bg-[var(--background-subtle)]"
+                  className="cursor-pointer px-6 py-2.5 rounded-full text-sm font-medium transition-all data-[state=active]:bg-[var(--color-btn-primary)] data-[state=active]:text-white data-[state=inactive]:text-[var(--muted)] data-[state=inactive]:hover:text-[var(--foreground)] data-[state=inactive]:hover:bg-[var(--background-subtle)]"
                 >
                   Amp Hub
                 </Tabs.Trigger>
                 <Tabs.Trigger
                   value="meters"
-                  className="cursor-pointer px-6 py-2.5 rounded-full text-sm font-medium transition-all data-[state=active]:bg-[var(--color-primary)] data-[state=active]:text-white data-[state=inactive]:text-[var(--muted)] data-[state=inactive]:hover:text-[var(--foreground)] data-[state=inactive]:hover:bg-[var(--background-subtle)]"
+                  className="cursor-pointer px-6 py-2.5 rounded-full text-sm font-medium transition-all data-[state=active]:bg-[var(--color-btn-primary)] data-[state=active]:text-white data-[state=inactive]:text-[var(--muted)] data-[state=inactive]:hover:text-[var(--foreground)] data-[state=inactive]:hover:bg-[var(--background-subtle)]"
                 >
                   PowerlinkGO
                 </Tabs.Trigger>

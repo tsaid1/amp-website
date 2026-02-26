@@ -417,15 +417,13 @@ export default function Home() {
               { value: "24h", label: "to live data" },
               { value: "0.2%", label: "margin of error" },
             ].map((stat, i) => (
-              <FadeIn key={stat.label} delay={i * 0.1}>
-                <div className="text-center lg:text-left">
-                  <dt className="font-display font-bold stat-glow text-dark-heading text-[clamp(2.5rem,5vw,4rem)] leading-none tracking-tight">
-                    {stat.value}
-                  </dt>
-                  <dd className="mt-2 text-dark-muted">
-                    {stat.label}
-                  </dd>
-                </div>
+              <FadeIn key={stat.label} delay={i * 0.1} className="text-center lg:text-left">
+                <dt className="font-display font-bold stat-glow text-dark-heading text-[clamp(2.5rem,5vw,4rem)] leading-none tracking-tight">
+                  {stat.value}
+                </dt>
+                <dd className="mt-2 text-dark-muted">
+                  {stat.label}
+                </dd>
               </FadeIn>
             ))}
           </dl>

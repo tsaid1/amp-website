@@ -12,10 +12,10 @@
   --color-primary-dark: #0D5C63;
   --color-primary-light: #B8E8DC;
 
-  /* Accessible Button Colors - WCAG AA compliant with white text */
-  --color-btn-primary: #0E9382;
-  --color-btn-primary-hover: #0D7E72;
-  --color-btn-primary-active: #0C6E64;
+  /* Accessible Button Colors - WCAG AA compliant with white text (≥4.5:1) */
+  --color-btn-primary: #0C7B6E;
+  --color-btn-primary-hover: #0A6B5F;
+  --color-btn-primary-active: #095C53;
 
   /* Secondary - Blue */
   --color-secondary: #0066FF;
