@@ -47,6 +47,18 @@ export async function postThreadReply(
   });
 }
 
+export async function addReaction(
+  channelId: string,
+  messageTs: string,
+  reaction: string
+) {
+  return slackFetch("reactions.add", {
+    channel: channelId,
+    timestamp: messageTs,
+    name: reaction,
+  });
+}
+
 export async function getReactions(messageTs: string) {
   const res = await fetch(
     `${SLACK_API}/reactions.get?channel=${SLACK_CHANNEL_ID}&timestamp=${messageTs}`,

@@ -6,11 +6,12 @@ import {
   getThreadReplies,
   postThreadReply,
   postMessage,
+  addReaction,
   formatDraftPreview,
   type DraftPreview,
 } from "@/lib/pipeline/slack";
 import { generateBlogPost } from "@/lib/pipeline/generate";
-import { generateSlug } from "@/lib/pipeline/publish";
+import { generateSlug, publishToGitHub } from "@/lib/pipeline/publish";
 import readingTime from "reading-time";
 
 const SLACK_SIGNING_SECRET = process.env.SLACK_SIGNING_SECRET;
@@ -76,6 +77,53 @@ function parseTopicMetadata(text: string): TopicData | null {
   };
 }
 
+// --- Draft metadata parsing ---
+
+interface DraftData {
+  slug: string;
+  title: string;
+  description: string;
+  keyword: string;
+  category: string;
+  keywords: string[];
+  content: string;
+  author: string;
+  readingTime: string;
+}
+
+function parseDraftMetadata(text: string): DraftData | null {
+  // Match: :package: _DRAFT_DATA:{...}_
+  const match = text.match(/:package:\s*_DRAFT_DATA:([\s\S]*?)_$/);
+  if (!match) return null;
+  try {
+    return JSON.parse(match[1]);
+  } catch {
+    return null;
+  }
+}
+
+// --- Find draft metadata in a thread ---
+
+async function findDraftDataInThread(
+  channelId: string,
+  threadTs: string
+): Promise<DraftData | null> {
+  const messages = await getThreadReplies(channelId, threadTs);
+  for (const msg of messages) {
+    if (msg.text) {
+      const data = parseDraftMetadata(msg.text);
+      if (data) return data;
+    }
+  }
+  return null;
+}
+
+// --- Check if a message is a draft preview ---
+
+function isDraftPreviewMessage(text: string): boolean {
+  return text.includes("Draft ready for review") || text.includes("Draft Ready:");
+}
+
 // --- Count total ✅ reactions across all messages in a thread ---
 
 async function countCheckmarksInThread(
@@ -123,12 +171,31 @@ async function generateDraft(
     fullContent: result.content,
   };
 
+  // Post draft preview as a new top-level message
   const blocks = formatDraftPreview(draft);
-  await postMessage(
+  const draftMessage = await postMessage(
     `📄 Draft ready for review: "${topic.title}"`,
     blocks
   );
 
+  // Post full draft data as a metadata reply in the draft preview thread
+  const draftData: DraftData = {
+    slug,
+    title: topic.title,
+    description: result.description,
+    keyword: topic.keyword,
+    category: topic.pillar,
+    keywords: result.keywords || [topic.keyword],
+    content: result.content,
+    author: "Amp Energy",
+    readingTime: stats.text,
+  };
+  await postThreadReply(
+    draftMessage.ts,
+    `📦 _DRAFT_DATA:${JSON.stringify(draftData)}_`
+  );
+
+  // Confirm in the original topic thread
   await postThreadReply(threadTs, `✅ Draft generated and posted for review: *${topic.title}*`);
 }
 
@@ -186,26 +253,69 @@ export async function POST(req: NextRequest) {
           const message = await getMessage(item.channel, item.ts);
           if (!message?.text) return;
 
+          // --- Path 1: Topic proposal → generate draft ---
           const topic = parseTopicMetadata(message.text);
-          if (!topic) return;
+          if (topic) {
+            const threadTs = message.thread_ts;
+            if (!threadTs) return;
 
-          const threadTs = message.thread_ts;
-          if (!threadTs) return;
+            const totalCheckmarks = await countCheckmarksInThread(
+              item.channel,
+              threadTs
+            );
+            if (totalCheckmarks > 2) return;
 
-          const totalCheckmarks = await countCheckmarksInThread(
-            item.channel,
-            threadTs
-          );
-          if (totalCheckmarks > 2) return;
+            const publishDay = totalCheckmarks <= 1 ? "Tuesday" : "Thursday";
 
-          const publishDay = totalCheckmarks <= 1 ? "Tuesday" : "Thursday";
+            await postThreadReply(
+              threadTs,
+              `⏳ Generating ${publishDay}'s draft: *${topic.title}*...`
+            );
 
-          await postThreadReply(
-            threadTs,
-            `⏳ Generating ${publishDay}'s draft: *${topic.title}*...`
-          );
+            await generateDraft(topic, publishDay, threadTs);
+            return;
+          }
 
-          await generateDraft(topic, publishDay, threadTs);
+          // --- Path 2: Draft preview → publish post ---
+          if (isDraftPreviewMessage(message.text)) {
+            // The reacted message is the draft preview (top-level).
+            // Its ts is the thread parent for the metadata reply.
+            const draftThreadTs = message.ts;
+
+            const draftData = await findDraftDataInThread(
+              item.channel,
+              draftThreadTs
+            );
+            if (!draftData) {
+              await postThreadReply(
+                draftThreadTs,
+                "❌ Could not find draft data to publish. Was the metadata reply deleted?"
+              );
+              return;
+            }
+
+            await postThreadReply(draftThreadTs, `⏳ Publishing: *${draftData.title}*...`);
+
+            await publishToGitHub({
+              slug: draftData.slug,
+              title: draftData.title,
+              description: draftData.description,
+              date: new Date().toISOString().split("T")[0],
+              author: draftData.author,
+              category: draftData.category,
+              keywords: draftData.keywords,
+              content: draftData.content,
+            });
+
+            await postThreadReply(
+              draftThreadTs,
+              `✅ Published! Live at: https://www.ampenergy.ae/blog/${draftData.slug}`
+            );
+
+            // Add 🚀 to the draft preview message
+            await addReaction(item.channel, item.ts, "rocket").catch(() => {});
+            return;
+          }
         } catch (err) {
           console.error("Slack reaction handler error:", err);
         }
