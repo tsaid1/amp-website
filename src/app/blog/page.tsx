@@ -18,10 +18,10 @@ export const metadata: Metadata = {
 };
 
 const CATEGORY_COLORS: Record<string, string> = {
-  compliance: "bg-amber-500/15 text-amber-400 border-amber-500/20",
-  efficiency: "bg-emerald-500/15 text-emerald-400 border-emerald-500/20",
-  technology: "bg-sky-500/15 text-sky-400 border-sky-500/20",
-  "thought-leadership": "bg-violet-500/15 text-violet-400 border-violet-500/20",
+  compliance: "bg-amber-50 text-amber-700 border-amber-200",
+  efficiency: "bg-emerald-50 text-emerald-700 border-emerald-200",
+  technology: "bg-sky-50 text-sky-700 border-sky-200",
+  "thought-leadership": "bg-violet-50 text-violet-700 border-violet-200",
 };
 
 function formatDate(dateStr: string): string {
@@ -39,10 +39,7 @@ function BlogCard({ post }: { post: BlogPostMeta }) {
 
   return (
     <Link href={`/blog/${post.slug}`} className="group block">
-      <article className="relative h-full rounded-2xl border border-[var(--section-dark-border)] bg-[#0D1B19]/60 p-6 backdrop-blur-sm transition-all duration-300 hover:border-[var(--border-accent)] hover:bg-[#0D1B19]/80 hover:shadow-[0_0_40px_rgba(29,185,160,0.06)]">
-        {/* Subtle corner glow on hover */}
-        <div className="absolute -right-px -top-px h-20 w-20 rounded-tr-2xl bg-gradient-to-bl from-[var(--color-primary)]/[0.08] to-transparent opacity-0 transition-opacity duration-300 group-hover:opacity-100" />
-
+      <article className="relative h-full rounded-2xl border border-gray-200 bg-white p-6 shadow-sm transition-all duration-300 hover:shadow-md hover:border-gray-300">
         {/* Category + Reading Time */}
         <div className="mb-4 flex items-center gap-3">
           <span
@@ -50,18 +47,18 @@ function BlogCard({ post }: { post: BlogPostMeta }) {
           >
             {getCategoryLabel(post.category)}
           </span>
-          <span className="text-xs text-[var(--section-dark-text-muted)]">
+          <span className="text-xs text-[#6B7B78]">
             {post.readingTime}
           </span>
         </div>
 
         {/* Title */}
-        <h2 className="mb-3 text-lg font-semibold leading-snug text-[var(--section-dark-heading)] transition-colors duration-200 group-hover:text-[var(--color-primary)]">
+        <h2 className="mb-3 text-lg font-semibold leading-snug text-[#0A1F1C] transition-colors duration-200 group-hover:text-[#1DB9A0]">
           {post.title}
         </h2>
 
         {/* Excerpt */}
-        <p className="mb-5 line-clamp-3 text-sm leading-relaxed text-[var(--section-dark-text-muted)]">
+        <p className="mb-5 line-clamp-3 text-sm leading-relaxed text-[#4A5E5B]">
           {post.description}
         </p>
 
@@ -69,11 +66,11 @@ function BlogCard({ post }: { post: BlogPostMeta }) {
         <div className="flex items-center justify-between">
           <time
             dateTime={post.date}
-            className="text-xs text-[var(--section-dark-text-muted)]/70"
+            className="text-xs text-[#6B7B78]"
           >
             {formatDate(post.date)}
           </time>
-          <span className="inline-flex items-center gap-1 text-xs font-medium text-[var(--color-primary)] opacity-0 transition-all duration-200 group-hover:opacity-100 group-hover:translate-x-0 -translate-x-2">
+          <span className="inline-flex items-center gap-1 text-xs font-medium text-[#1DB9A0] opacity-0 transition-all duration-200 group-hover:opacity-100 group-hover:translate-x-0 -translate-x-2">
             Read
             <svg
               className="h-3.5 w-3.5"
@@ -134,39 +131,41 @@ export default function BlogPage() {
       </section>
 
       {/* Posts Grid */}
-      <section className="mx-auto max-w-7xl px-4 py-16 sm:px-6 sm:py-20 lg:px-8">
-        {posts.length === 0 ? (
-          <div className="flex flex-col items-center justify-center py-20 text-center">
-            <div className="mb-6 flex h-16 w-16 items-center justify-center rounded-2xl border border-[var(--section-dark-border)] bg-[var(--section-dark-bg-subtle)]">
-              <svg
-                className="h-8 w-8 text-[var(--color-primary)]"
-                fill="none"
-                viewBox="0 0 24 24"
-                stroke="currentColor"
-                strokeWidth={1.5}
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  d="M12 6.042A8.967 8.967 0 006 3.75c-1.052 0-2.062.18-3 .512v14.25A8.987 8.987 0 016 18c2.305 0 4.408.867 6 2.292m0-14.25a8.966 8.966 0 016-2.292c1.052 0 2.062.18 3 .512v14.25A8.987 8.987 0 0018 18a8.967 8.967 0 00-6 2.292m0-14.25v14.25"
-                />
-              </svg>
+      <section className="bg-[#F8FAFA]">
+        <div className="mx-auto max-w-7xl px-4 py-16 sm:px-6 sm:py-20 lg:px-8">
+          {posts.length === 0 ? (
+            <div className="flex flex-col items-center justify-center py-20 text-center">
+              <div className="mb-6 flex h-16 w-16 items-center justify-center rounded-2xl border border-gray-200 bg-white">
+                <svg
+                  className="h-8 w-8 text-[#1DB9A0]"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                  strokeWidth={1.5}
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    d="M12 6.042A8.967 8.967 0 006 3.75c-1.052 0-2.062.18-3 .512v14.25A8.987 8.987 0 016 18c2.305 0 4.408.867 6 2.292m0-14.25a8.966 8.966 0 016-2.292c1.052 0 2.062.18 3 .512v14.25A8.987 8.987 0 0018 18a8.967 8.967 0 00-6 2.292m0-14.25v14.25"
+                  />
+                </svg>
+              </div>
+              <h2 className="mb-2 text-xl font-semibold text-[#0A1F1C]">
+                Coming Soon
+              </h2>
+              <p className="max-w-md text-[#6B7B78]">
+                We&apos;re preparing expert insights on building energy intelligence,
+                compliance, and sustainability. Check back soon.
+              </p>
             </div>
-            <h2 className="mb-2 text-xl font-semibold text-[var(--section-dark-heading)]">
-              Coming Soon
-            </h2>
-            <p className="max-w-md text-[var(--section-dark-text-muted)]">
-              We&apos;re preparing expert insights on building energy intelligence,
-              compliance, and sustainability. Check back soon.
-            </p>
-          </div>
-        ) : (
-          <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-            {posts.map((post) => (
-              <BlogCard key={post.slug} post={post} />
-            ))}
-          </div>
-        )}
+          ) : (
+            <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+              {posts.map((post) => (
+                <BlogCard key={post.slug} post={post} />
+              ))}
+            </div>
+          )}
+        </div>
       </section>
 
       {/* CTA Banner */}

@@ -43,10 +43,10 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
 }
 
 const CATEGORY_COLORS: Record<string, string> = {
-  compliance: "bg-amber-500/15 text-amber-400 border-amber-500/20",
-  efficiency: "bg-emerald-500/15 text-emerald-400 border-emerald-500/20",
-  technology: "bg-sky-500/15 text-sky-400 border-sky-500/20",
-  "thought-leadership": "bg-violet-500/15 text-violet-400 border-violet-500/20",
+  compliance: "bg-amber-50 text-amber-700 border-amber-200",
+  efficiency: "bg-emerald-50 text-emerald-700 border-emerald-200",
+  technology: "bg-sky-50 text-sky-700 border-sky-200",
+  "thought-leadership": "bg-violet-50 text-violet-700 border-violet-200",
 };
 
 function formatDate(dateStr: string): string {
@@ -99,15 +99,15 @@ export default async function BlogPostPage({ params }: PageProps) {
   };
 
   return (
-    <div className="min-h-screen bg-[var(--section-dark-bg)]">
+    <div className="min-h-screen">
       {/* JSON-LD */}
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
       />
 
-      {/* Article Header */}
-      <header className="relative overflow-hidden border-b border-[var(--section-dark-border)] pb-12 pt-24 sm:pb-16 sm:pt-32">
+      {/* Article Header — stays dark */}
+      <header className="relative overflow-hidden border-b border-[var(--section-dark-border)] bg-[var(--section-dark-bg)] pb-12 pt-24 sm:pb-16 sm:pt-32">
         <div className="pointer-events-none absolute left-1/2 top-0 h-[400px] w-[600px] -translate-x-1/2 -translate-y-1/2 rounded-full bg-[var(--glow-teal)] blur-3xl" />
 
         <div className="relative mx-auto max-w-3xl px-4 sm:px-6 lg:px-8">
@@ -173,53 +173,55 @@ export default async function BlogPostPage({ params }: PageProps) {
         </div>
       </header>
 
-      {/* Article Body */}
-      <article className="mx-auto max-w-3xl px-4 py-12 sm:px-6 sm:py-16 lg:px-8">
-        <MarkdownRenderer content={post.content} />
-      </article>
+      {/* Article Body — light theme */}
+      <div className="bg-[#FAFBFC]">
+        <article className="mx-auto max-w-[720px] px-4 py-12 sm:px-6 sm:py-16 lg:px-8">
+          <MarkdownRenderer content={post.content} />
+        </article>
 
-      {/* Keywords / Tags */}
-      {post.keywords.length > 0 && (
-        <div className="mx-auto max-w-3xl border-t border-[var(--section-dark-border)] px-4 py-8 sm:px-6 lg:px-8">
-          <div className="flex flex-wrap gap-2">
-            {post.keywords.map((keyword) => (
-              <span
-                key={keyword}
-                className="rounded-full border border-[var(--section-dark-border)] bg-[var(--section-dark-bg-subtle)] px-3 py-1 text-xs text-[var(--section-dark-text-muted)]"
-              >
-                {keyword}
-              </span>
-            ))}
-          </div>
-        </div>
-      )}
-
-      {/* Related Posts */}
-      {relatedPosts.length > 0 && (
-        <section className="border-t border-[var(--section-dark-border)]">
-          <div className="mx-auto max-w-3xl px-4 py-12 sm:px-6 sm:py-16 lg:px-8">
-            <h2 className="mb-6 text-xl font-semibold text-[var(--section-dark-heading)]">
-              Related Articles
-            </h2>
-            <div className="grid gap-4 sm:grid-cols-2">
-              {relatedPosts.map((rp) => (
-                <Link
-                  key={rp.slug}
-                  href={`/blog/${rp.slug}`}
-                  className="group rounded-xl border border-[var(--section-dark-border)] bg-[#0D1B19]/60 p-5 transition-all duration-200 hover:border-[var(--border-accent)]"
+        {/* Keywords / Tags */}
+        {post.keywords.length > 0 && (
+          <div className="mx-auto max-w-[720px] border-t border-[#E2E8E7] px-4 py-8 sm:px-6 lg:px-8">
+            <div className="flex flex-wrap gap-2">
+              {post.keywords.map((keyword) => (
+                <span
+                  key={keyword}
+                  className="rounded-full border border-gray-200 bg-white px-3 py-1 text-xs text-[#6B7B78]"
                 >
-                  <p className="mb-1 text-xs text-[var(--section-dark-text-muted)]">
-                    {getCategoryLabel(rp.category)}
-                  </p>
-                  <h3 className="text-sm font-semibold leading-snug text-[var(--section-dark-heading)] transition-colors group-hover:text-[var(--color-primary)]">
-                    {rp.title}
-                  </h3>
-                </Link>
+                  {keyword}
+                </span>
               ))}
             </div>
           </div>
-        </section>
-      )}
+        )}
+
+        {/* Related Posts */}
+        {relatedPosts.length > 0 && (
+          <section className="border-t border-[#E2E8E7]">
+            <div className="mx-auto max-w-[720px] px-4 py-12 sm:px-6 sm:py-16 lg:px-8">
+              <h2 className="mb-6 text-xl font-semibold text-[#0A1F1C]">
+                Related Articles
+              </h2>
+              <div className="grid gap-4 sm:grid-cols-2">
+                {relatedPosts.map((rp) => (
+                  <Link
+                    key={rp.slug}
+                    href={`/blog/${rp.slug}`}
+                    className="group rounded-xl border border-gray-200 bg-white p-5 shadow-sm transition-all duration-200 hover:shadow-md hover:border-gray-300"
+                  >
+                    <p className="mb-1 text-xs text-[#6B7B78]">
+                      {getCategoryLabel(rp.category)}
+                    </p>
+                    <h3 className="text-sm font-semibold leading-snug text-[#0A1F1C] transition-colors group-hover:text-[#1DB9A0]">
+                      {rp.title}
+                    </h3>
+                  </Link>
+                ))}
+              </div>
+            </div>
+          </section>
+        )}
+      </div>
 
       {/* CTA */}
       <section className="border-t border-[var(--section-dark-border)]">
