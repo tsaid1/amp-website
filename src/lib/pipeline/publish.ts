@@ -54,47 +54,136 @@ export function createMdxFile(input: PublishInput): string {
   return slug;
 }
 
-export async function publishToGitHub(input: PublishInput): Promise<void> {
+// --- GitHub Contents API helpers ---
+
+async function putGitHubFile(
+  filePath: string,
+  content: string,
+  commitMessage: string
+): Promise<void> {
   if (!GITHUB_PAT) {
     throw new Error("GITHUB_PAT environment variable is not set");
   }
 
-  const slug = input.slug || generateSlug(input.title);
-  const filePath = `content/blog/${slug}.mdx`;
-  const fileContent = buildMdxContent(input);
-  const contentBase64 = Buffer.from(fileContent).toString("base64");
+  const url = `https://api.github.com/repos/${GITHUB_REPO}/contents/${filePath}`;
+  const contentBase64 = Buffer.from(content).toString("base64");
 
   // Check if file already exists (need its SHA to update)
   let existingSha: string | undefined;
-  const getRes = await fetch(
-    `https://api.github.com/repos/${GITHUB_REPO}/contents/${filePath}`,
-    { headers: { Authorization: `Bearer ${GITHUB_PAT}` } }
-  );
+  const getRes = await fetch(url, {
+    headers: { Authorization: `Bearer ${GITHUB_PAT}` },
+  });
   if (getRes.ok) {
     const existing = await getRes.json();
     existingSha = existing.sha;
   }
 
-  const res = await fetch(
-    `https://api.github.com/repos/${GITHUB_REPO}/contents/${filePath}`,
-    {
-      method: "PUT",
-      headers: {
-        Authorization: `Bearer ${GITHUB_PAT}`,
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        message: `blog: publish ${input.title} [automated]`,
-        content: contentBase64,
-        ...(existingSha ? { sha: existingSha } : {}),
-      }),
-    }
-  );
+  const res = await fetch(url, {
+    method: "PUT",
+    headers: {
+      Authorization: `Bearer ${GITHUB_PAT}`,
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      message: commitMessage,
+      content: contentBase64,
+      ...(existingSha ? { sha: existingSha } : {}),
+    }),
+  });
 
   if (!res.ok) {
     const error = await res.text();
     throw new Error(`GitHub API error (${res.status}): ${error}`);
   }
+}
+
+async function getGitHubFile(filePath: string): Promise<string> {
+  if (!GITHUB_PAT) {
+    throw new Error("GITHUB_PAT environment variable is not set");
+  }
+
+  const url = `https://api.github.com/repos/${GITHUB_REPO}/contents/${filePath}`;
+  const res = await fetch(url, {
+    headers: { Authorization: `Bearer ${GITHUB_PAT}` },
+  });
+
+  if (!res.ok) {
+    const error = await res.text();
+    throw new Error(`GitHub API error (${res.status}): ${error}`);
+  }
+
+  const data = await res.json();
+  return Buffer.from(data.content, "base64").toString("utf-8");
+}
+
+async function deleteGitHubFile(
+  filePath: string,
+  commitMessage: string
+): Promise<void> {
+  if (!GITHUB_PAT) {
+    throw new Error("GITHUB_PAT environment variable is not set");
+  }
+
+  const url = `https://api.github.com/repos/${GITHUB_REPO}/contents/${filePath}`;
+
+  // Get current SHA
+  const getRes = await fetch(url, {
+    headers: { Authorization: `Bearer ${GITHUB_PAT}` },
+  });
+  if (!getRes.ok) return; // File doesn't exist, nothing to delete
+
+  const existing = await getRes.json();
+
+  const res = await fetch(url, {
+    method: "DELETE",
+    headers: {
+      Authorization: `Bearer ${GITHUB_PAT}`,
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      message: commitMessage,
+      sha: existing.sha,
+    }),
+  });
+
+  if (!res.ok) {
+    const error = await res.text();
+    throw new Error(`GitHub API delete error (${res.status}): ${error}`);
+  }
+}
+
+// --- Public API ---
+
+export async function publishToGitHub(input: PublishInput): Promise<void> {
+  const slug = input.slug || generateSlug(input.title);
+  await putGitHubFile(
+    `content/blog/${slug}.mdx`,
+    buildMdxContent(input),
+    `blog: publish ${input.title} [automated]`
+  );
+}
+
+export async function saveDraftToGitHub(input: PublishInput): Promise<void> {
+  const slug = input.slug || generateSlug(input.title);
+  await putGitHubFile(
+    `drafts/${slug}.mdx`,
+    buildMdxContent(input),
+    `blog: save draft ${input.title} [automated]`
+  );
+}
+
+export async function publishDraftFromGitHub(slug: string, title: string): Promise<void> {
+  const draftPath = `drafts/${slug}.mdx`;
+  const publishPath = `content/blog/${slug}.mdx`;
+
+  // Read the draft content
+  const content = await getGitHubFile(draftPath);
+
+  // Write to published location
+  await putGitHubFile(publishPath, content, `blog: publish ${title} [automated]`);
+
+  // Delete the draft
+  await deleteGitHubFile(draftPath, `blog: remove draft ${slug} [automated]`);
 }
 
 export { generateSlug };

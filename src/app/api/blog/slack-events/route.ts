@@ -11,7 +11,11 @@ import {
   type DraftPreview,
 } from "@/lib/pipeline/slack";
 import { generateBlogPost } from "@/lib/pipeline/generate";
-import { generateSlug, publishToGitHub } from "@/lib/pipeline/publish";
+import {
+  generateSlug,
+  saveDraftToGitHub,
+  publishDraftFromGitHub,
+} from "@/lib/pipeline/publish";
 import readingTime from "reading-time";
 
 const SLACK_SIGNING_SECRET = process.env.SLACK_SIGNING_SECRET;
@@ -62,7 +66,6 @@ interface TopicData {
 }
 
 function parseTopicMetadata(text: string): TopicData | null {
-  // Match the metadata line — Slack returns emoji as :bar_chart: not 📊
   const match = text.match(
     /:bar_chart:\s*_Title:\s*(.+?)\s*\|\s*Keyword:\s*(.+?)\s*\|\s*Persona:\s*(.+?)\s*\|\s*Pillar:\s*(.+?)\s*\|\s*Brief:\s*(.+?)_/
   );
@@ -77,23 +80,15 @@ function parseTopicMetadata(text: string): TopicData | null {
   };
 }
 
-// --- Draft metadata parsing ---
+// --- Draft metadata parsing (slug + title only, content lives in GitHub) ---
 
-interface DraftData {
+interface DraftMeta {
   slug: string;
   title: string;
-  description: string;
-  keyword: string;
-  category: string;
-  keywords: string[];
-  content: string;
-  author: string;
-  readingTime: string;
 }
 
-function parseDraftMetadata(text: string): DraftData | null {
-  // Match _DRAFT_DATA:{...}_ regardless of emoji prefix (📦 or :package:)
-  const match = text.match(/_DRAFT_DATA:([\s\S]*?)_$/);
+function parseDraftMeta(text: string): DraftMeta | null {
+  const match = text.match(/_DRAFT_META:([\s\S]*?)_$/);
   if (!match) return null;
   try {
     return JSON.parse(match[1]);
@@ -102,26 +97,21 @@ function parseDraftMetadata(text: string): DraftData | null {
   }
 }
 
-// --- Find draft metadata in a thread ---
-
-async function findDraftDataInThread(
+async function findDraftMetaInThread(
   channelId: string,
   threadTs: string
-): Promise<DraftData | null> {
-  console.log("Looking for DRAFT_DATA pattern in replies, thread_ts:", threadTs);
+): Promise<DraftMeta | null> {
   const messages = await getThreadReplies(channelId, threadTs);
-  console.log("Thread replies count:", messages.length);
   for (const msg of messages) {
-    console.log("Reply text preview:", msg.text?.substring(0, 100));
     if (msg.text) {
-      const data = parseDraftMetadata(msg.text);
+      const data = parseDraftMeta(msg.text);
       if (data) return data;
     }
   }
   return null;
 }
 
-// --- Check if a message is a draft preview ---
+// --- Message type detection ---
 
 function isDraftPreviewMessage(text: string): boolean {
   return text.includes("Draft ready for review") || text.includes("Draft Ready:");
@@ -143,7 +133,7 @@ async function countCheckmarksInThread(
   return total;
 }
 
-// --- Generate draft directly (no HTTP self-call) ---
+// --- Generate draft: create content, save to GitHub drafts/, post preview to Slack ---
 
 async function generateDraft(
   topic: TopicData,
@@ -162,6 +152,19 @@ async function generateDraft(
   const stats = readingTime(result.content);
   const wordCount = result.content.split(/\s+/).length;
 
+  // Save full MDX to GitHub drafts/ directory
+  await saveDraftToGitHub({
+    slug,
+    title: topic.title,
+    description: result.description,
+    date: new Date().toISOString().split("T")[0],
+    author: "Amp Energy",
+    category: topic.pillar,
+    keywords: result.keywords || [topic.keyword],
+    content: result.content,
+  });
+
+  // Post draft preview to Slack
   const draft: DraftPreview = {
     title: topic.title,
     description: result.description,
@@ -174,28 +177,17 @@ async function generateDraft(
     fullContent: result.content,
   };
 
-  // Post draft preview as a new top-level message
   const blocks = formatDraftPreview(draft);
   const draftMessage = await postMessage(
     `📄 Draft ready for review: "${topic.title}"`,
     blocks
   );
 
-  // Post full draft data as a metadata reply in the draft preview thread
-  const draftData: DraftData = {
-    slug,
-    title: topic.title,
-    description: result.description,
-    keyword: topic.keyword,
-    category: topic.pillar,
-    keywords: result.keywords || [topic.keyword],
-    content: result.content,
-    author: "Amp Energy",
-    readingTime: stats.text,
-  };
+  // Post lightweight metadata reply (no content — it's in GitHub)
+  const draftMeta: DraftMeta = { slug, title: topic.title };
   await postThreadReply(
     draftMessage.ts,
-    `📦 _DRAFT_DATA:${JSON.stringify(draftData)}_`
+    `📦 _DRAFT_META:${JSON.stringify(draftMeta)}_`
   );
 
   // Confirm in the original topic thread
@@ -240,17 +232,14 @@ export async function POST(req: NextRequest) {
     ) {
       const item = event.item as { channel: string; ts: string; type: string };
 
-      // Only handle reactions in the blog pipeline channel
       if (item.channel !== SLACK_CHANNEL_ID) {
         return NextResponse.json({ ok: true });
       }
 
-      // Only handle reactions on messages
       if (item.type !== "message") {
         return NextResponse.json({ ok: true });
       }
 
-      // Process async — waitUntil keeps the function alive after returning 200
       async function handleReaction() {
         try {
           const message = await getMessage(item.channel, item.ts);
@@ -281,42 +270,30 @@ export async function POST(req: NextRequest) {
 
           // --- Path 2: Draft preview → publish post ---
           if (isDraftPreviewMessage(message.text)) {
-            // The reacted message is the draft preview (top-level).
-            // Its ts is the thread parent for the metadata reply.
             const draftThreadTs = message.ts;
-            console.log("Draft preview detected, message.ts:", message.ts, "item.ts:", item.ts);
 
-            const draftData = await findDraftDataInThread(
+            const draftMeta = await findDraftMetaInThread(
               item.channel,
               draftThreadTs
             );
-            if (!draftData) {
+            if (!draftMeta) {
               await postThreadReply(
                 draftThreadTs,
-                "❌ Could not find draft data to publish. Was the metadata reply deleted?"
+                "❌ Could not find draft metadata. Was the metadata reply deleted?"
               );
               return;
             }
 
-            await postThreadReply(draftThreadTs, `⏳ Publishing: *${draftData.title}*...`);
+            await postThreadReply(draftThreadTs, `⏳ Publishing: *${draftMeta.title}*...`);
 
-            await publishToGitHub({
-              slug: draftData.slug,
-              title: draftData.title,
-              description: draftData.description,
-              date: new Date().toISOString().split("T")[0],
-              author: draftData.author,
-              category: draftData.category,
-              keywords: draftData.keywords,
-              content: draftData.content,
-            });
+            // Move from drafts/ to content/blog/ via GitHub API
+            await publishDraftFromGitHub(draftMeta.slug, draftMeta.title);
 
             await postThreadReply(
               draftThreadTs,
-              `✅ Published! Live at: https://www.ampenergy.ae/blog/${draftData.slug}`
+              `✅ Published! Live at: https://www.ampenergy.ae/blog/${draftMeta.slug}`
             );
 
-            // Add 🚀 to the draft preview message
             await addReaction(item.channel, item.ts, "rocket").catch(() => {});
             return;
           }
