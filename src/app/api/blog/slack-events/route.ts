@@ -9,8 +9,9 @@ import {
   addReaction,
   formatDraftPreview,
   type DraftPreview,
+  type TopicProposal,
 } from "@/lib/pipeline/slack";
-import { generateBlogPost } from "@/lib/pipeline/generate";
+import { generateBlogPost, generateTopics } from "@/lib/pipeline/generate";
 import {
   generateSlug,
   saveDraftToGitHub,
@@ -115,6 +116,18 @@ async function findDraftMetaInThread(
 
 function isDraftPreviewMessage(text: string): boolean {
   return text.includes("Draft ready for review") || text.includes("Draft Ready:");
+}
+
+function formatTopicReply(topic: TopicProposal, index: number): string {
+  return [
+    `*${index + 1}. ${topic.title}*`,
+    topic.brief,
+    "",
+    `*Keyword:* ${topic.keyword} | *Persona:* ${topic.persona}`,
+    `*Pillar:* ${topic.pillar} | *Timeliness:* ${topic.timeliness}`,
+    "",
+    `📊 _Title: ${topic.title} | Keyword: ${topic.keyword} | Persona: ${topic.persona} | Pillar: ${topic.pillar} | Brief: ${topic.brief}_`,
+  ].join("\n");
 }
 
 // --- Count total ✅ reactions across all messages in a thread ---
@@ -261,86 +274,147 @@ export async function POST(req: NextRequest) {
   if (body.type === "event_callback") {
     const event = body.event as Record<string, unknown>;
 
-    if (
-      event.type === "reaction_added" &&
-      event.reaction === "white_check_mark"
-    ) {
+    if (event.type === "reaction_added") {
+      const reaction = event.reaction as string;
       const item = event.item as { channel: string; ts: string; type: string };
 
-      if (item.channel !== SLACK_CHANNEL_ID) {
+      if (item.channel !== SLACK_CHANNEL_ID || item.type !== "message") {
         return NextResponse.json({ ok: true });
       }
 
-      if (item.type !== "message") {
+      // --- ✅ Checkmark: approve topic or draft ---
+      if (reaction === "white_check_mark") {
+        async function handleCheckmark() {
+          try {
+            const message = await getMessage(item.channel, item.ts);
+            if (!message?.text) return;
+
+            // --- Path 1: Topic proposal → generate draft ---
+            const topic = parseTopicMetadata(message.text);
+            if (topic) {
+              const threadTs = message.thread_ts;
+              if (!threadTs) return;
+
+              const totalCheckmarks = await countCheckmarksInThread(
+                item.channel,
+                threadTs
+              );
+              if (totalCheckmarks > 2) return;
+
+              const publishDay = totalCheckmarks <= 1 ? "Tuesday" : "Thursday";
+
+              await postThreadReply(
+                threadTs,
+                `⏳ Generating ${publishDay}'s draft: *${topic.title}*...`
+              );
+
+              await generateDraft(topic, publishDay, threadTs);
+              return;
+            }
+
+            // --- Path 2: Draft preview → approve for scheduled publish ---
+            if (isDraftPreviewMessage(message.text)) {
+              const draftThreadTs = message.ts;
+
+              const draftMeta = await findDraftMetaInThread(
+                item.channel,
+                draftThreadTs
+              );
+              if (!draftMeta) {
+                await postThreadReply(
+                  draftThreadTs,
+                  "❌ Could not find draft metadata. Was the metadata reply deleted?"
+                );
+                return;
+              }
+
+              await postThreadReply(draftThreadTs, `⏳ Approving: *${draftMeta.title}*...`);
+
+              // Move from drafts/ to approved/ via GitHub API
+              await moveDraftToApproved(draftMeta.slug);
+
+              const publishDate = getNextPublishDate();
+              await postThreadReply(
+                draftThreadTs,
+                `✅ Approved! Scheduled for publish on ${publishDate} at 9:00 AM GST`
+              );
+
+              await addReaction(item.channel, item.ts, "calendar").catch(() => {});
+              return;
+            }
+          } catch (err) {
+            console.error("Slack checkmark handler error:", err);
+          }
+        }
+
+        waitUntil(handleCheckmark());
         return NextResponse.json({ ok: true });
       }
 
-      async function handleReaction() {
-        try {
-          const message = await getMessage(item.channel, item.ts);
-          if (!message?.text) return;
+      // --- 🔄 Refresh: generate fresh batch of topics ---
+      if (reaction === "arrows_counterclockwise") {
+        async function handleRefresh() {
+          try {
+            const message = await getMessage(item.channel, item.ts);
+            if (!message?.text) return;
 
-          // --- Path 1: Topic proposal → generate draft ---
-          const topic = parseTopicMetadata(message.text);
-          if (topic) {
-            const threadTs = message.thread_ts;
-            if (!threadTs) return;
+            // Only act on topic proposal header messages
+            if (!message.text.includes("Blog Topic Proposals")) return;
 
+            // The header message is the thread parent, so thread_ts is its own ts
+            const threadTs = message.ts;
+
+            // Check if both slots are already filled
             const totalCheckmarks = await countCheckmarksInThread(
               item.channel,
               threadTs
             );
-            if (totalCheckmarks > 2) return;
-
-            const publishDay = totalCheckmarks <= 1 ? "Tuesday" : "Thursday";
 
             await postThreadReply(
               threadTs,
-              `⏳ Generating ${publishDay}'s draft: *${topic.title}*...`
+              "🔄 Generating fresh batch of topics..."
             );
 
-            await generateDraft(topic, publishDay, threadTs);
-            return;
-          }
+            // Generate new topics
+            const rawTopics = await generateTopics();
 
-          // --- Path 2: Draft preview → approve for scheduled publish ---
-          if (isDraftPreviewMessage(message.text)) {
-            const draftThreadTs = message.ts;
-
-            const draftMeta = await findDraftMetaInThread(
-              item.channel,
-              draftThreadTs
-            );
-            if (!draftMeta) {
-              await postThreadReply(
-                draftThreadTs,
-                "❌ Could not find draft metadata. Was the metadata reply deleted?"
-              );
-              return;
+            let topics: TopicProposal[];
+            try {
+              topics = JSON.parse(rawTopics);
+            } catch {
+              const match = rawTopics.match(/\[[\s\S]*\]/);
+              if (match) {
+                topics = JSON.parse(match[0]);
+              } else {
+                await postThreadReply(threadTs, "❌ Failed to parse generated topics.");
+                return;
+              }
             }
 
-            await postThreadReply(draftThreadTs, `⏳ Approving: *${draftMeta.title}*...`);
+            // Post each new topic as a thread reply
+            for (let i = 0; i < topics.length; i++) {
+              await postThreadReply(threadTs, formatTopicReply(topics[i], i));
+            }
 
-            // Move from drafts/ to approved/ via GitHub API
-            await moveDraftToApproved(draftMeta.slug);
+            if (totalCheckmarks >= 2) {
+              await postThreadReply(
+                threadTs,
+                "⚠️ Note: Both Tuesday and Thursday slots are already filled."
+              );
+            }
 
-            const publishDate = getNextPublishDate();
             await postThreadReply(
-              draftThreadTs,
-              `✅ Approved! Scheduled for publish on ${publishDate} at 9:00 AM GST`
+              threadTs,
+              "✅ Fresh batch ready! React ✅ on your picks."
             );
-
-            await addReaction(item.channel, item.ts, "calendar").catch(() => {});
-            return;
+          } catch (err) {
+            console.error("Slack refresh handler error:", err);
           }
-        } catch (err) {
-          console.error("Slack reaction handler error:", err);
         }
+
+        waitUntil(handleRefresh());
+        return NextResponse.json({ ok: true });
       }
-
-      waitUntil(handleReaction());
-
-      return NextResponse.json({ ok: true });
     }
   }
 
