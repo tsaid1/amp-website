@@ -1,4 +1,6 @@
 import { ImageResponse } from "next/og";
+import { readFile } from "fs/promises";
+import { join } from "path";
 import { getPostBySlug, getCategoryLabel } from "@/lib/blog";
 
 export const size = { width: 1200, height: 630 };
@@ -25,11 +27,9 @@ export default async function OGImage({
   const categoryColor = CATEGORY_COLORS[category] ?? "#10B981";
   const categoryLabel = getCategoryLabel(category);
 
-  const fontData = await fetch(
-    new URL(
-      "https://github.com/nicholasgasior/gfonts/raw/master/fonts/space_grotesk/SpaceGrotesk-Bold.ttf"
-    )
-  ).then((res) => res.arrayBuffer());
+  const fontData = await readFile(
+    join(process.cwd(), "src/assets/fonts/SpaceGrotesk-Bold.ttf")
+  );
 
   return new ImageResponse(
     (

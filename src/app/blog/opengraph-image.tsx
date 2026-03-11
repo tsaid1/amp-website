@@ -1,14 +1,14 @@
 import { ImageResponse } from "next/og";
+import { readFile } from "fs/promises";
+import { join } from "path";
 
 export const size = { width: 1200, height: 630 };
 export const contentType = "image/png";
 
 export default async function OGImage() {
-  const fontData = await fetch(
-    new URL(
-      "https://github.com/nicholasgasior/gfonts/raw/master/fonts/space_grotesk/SpaceGrotesk-Bold.ttf"
-    )
-  ).then((res) => res.arrayBuffer());
+  const fontData = await readFile(
+    join(process.cwd(), "src/assets/fonts/SpaceGrotesk-Bold.ttf")
+  );
 
   return new ImageResponse(
     (

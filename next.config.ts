@@ -11,6 +11,8 @@ const nextConfig: NextConfig = {
   outputFileTracingIncludes: {
     "/blog": ["./content/blog/**/*"],
     "/blog/[slug]": ["./content/blog/**/*"],
+    "/blog/opengraph-image": ["./src/assets/fonts/**/*"],
+    "/blog/[slug]/opengraph-image": ["./src/assets/fonts/**/*"],
   },
   async redirects() {
     return [
