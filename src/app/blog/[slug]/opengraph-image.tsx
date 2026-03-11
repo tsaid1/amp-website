@@ -27,7 +27,7 @@ export default async function OGImage({
 
   const fontData = await fetch(
     new URL(
-      "https://fonts.gstatic.com/s/spacegrotesk/v16/V8mDoQDjQSkFtoMM3T6r8E7mPb54C_k3HqUtEw.woff2"
+      "https://github.com/nicholasgasior/gfonts/raw/master/fonts/space_grotesk/SpaceGrotesk-Bold.ttf"
     )
   ).then((res) => res.arrayBuffer());
 
